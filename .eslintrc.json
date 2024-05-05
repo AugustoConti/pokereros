@@ -1,3 +1,81 @@
 {
-  "extends": "next/core-web-vitals"
+  "env": { "browser": true, "es2022": true, "node": true },
+  "extends": [
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended",
+    "next/core-web-vitals",
+    "plugin:@typescript-eslint/recommended",
+    "standard-with-typescript",
+    "plugin:prettier/recommended"
+  ],
+  "ignorePatterns": ["app/utils/seats.js"],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaFeatures": { "jsx": true },
+    "ecmaVersion": 12,
+    "sourceType": "module",
+    "project": "./tsconfig.json"
+  },
+  "plugins": [
+    "react",
+    "prettier",
+    "import",
+    "@typescript-eslint"
+  ],
+  "rules": {
+    "@next/next/no-img-element": "off",
+    "@typescript-eslint/comma-dangle": ["error", "only-multiline"],
+    "@typescript-eslint/consistent-type-definitions": "off",
+    "@typescript-eslint/explicit-function-return-type": "off",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/no-confusing-void-expression": "off",
+    "@typescript-eslint/no-invalid-void-type": "off",
+    "@typescript-eslint/no-unnecessary-condition": "error",
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      { "args": "after-used", "ignoreRestSiblings": false, "argsIgnorePattern": "^_.*?$" }
+    ],
+    "@typescript-eslint/no-use-before-define": ["error"],
+    "@typescript-eslint/no-var-requires": "off",
+    "@typescript-eslint/strict-boolean-expressions": "off",
+    "comma-dangle": "off",
+    "import/no-unused-modules": [1, {"unusedExports": true}],
+    "import/order": [
+      "warn",
+      {
+        "groups": ["type", "builtin", "object", "external", "internal", "parent", "sibling", "index"],
+        "pathGroups": [{ "pattern": "~/**", "group": "external", "position": "after" }],
+        "newlines-between": "always",
+        "alphabetize": { "order": "asc", "caseInsensitive": true }
+      }
+    ],
+    "no-console": "warn",
+    "no-nested-ternary": "off",
+    "no-unused-vars": "off",
+    "no-use-before-define": "off",
+    "padding-line-between-statements": [
+      "warn",
+      { "blankLine": "always", "prev": "*", "next": "return" },
+      { "blankLine": "always", "prev": ["const", "let", "var"], "next": "*" },
+      { "blankLine": "any", "prev": ["const", "let", "var"], "next": ["const", "let", "var"] }
+    ],
+    "prettier/prettier": ["error", {}, { "usePrettierrc": true }],
+    "react/jsx-curly-newline": "off",
+    "react/jsx-props-no-spreading": "off",
+    "react/jsx-sort-props": [
+      "warn",
+      {
+        "callbacksLast": true,
+        "noSortAlphabetically": false,
+        "reservedFirst": true,
+        "shorthandFirst": true
+      }
+    ],
+    "react/jsx-wrap-multilines": "off",
+    "react/no-unknown-property": ["warn", {}],
+    "react/prop-types": "off",
+    "react/react-in-jsx-scope": "off",
+    "react/require-default-props": "off",
+    "react/self-closing-comp": "warn"
+  }
 }

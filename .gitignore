@@ -34,3 +34,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.vscode
+.history
+.idea
+yarn.lock
+.eslintcache
+tsconfig.tsbuildinfo
