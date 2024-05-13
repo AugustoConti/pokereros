@@ -11,14 +11,15 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 // eslint-disable-next-line import/no-unused-modules
 export const metadata: Metadata = {
   title: "Pokereros",
-  description: "",
+  description:
+    "Gestiona entradas, recompras y salidas en tus juegos de póker de forma eficiente y calcula automaticamente las deudas entre jugadores.",
 };
 
 // eslint-disable-next-line import/no-unused-modules
-export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
-      <body className={cn("min-h-screen bg-background font-sans antialiased", inter.variable)}>
+    <html suppressHydrationWarning lang="es">
+      <body className={cn("dark min-h-screen bg-background font-sans antialiased", inter.variable)}>
         {children}
       </body>
     </html>

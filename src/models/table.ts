@@ -13,7 +13,21 @@ type Movement = {
 
 const byAmount = (a: { amount: number }, b: { amount: number }) => b.amount - a.amount;
 
-class Table {
+interface PokerTable {
+  addPlayer: (player: Player, alias: string, amount: number) => void;
+  reBuy: (player: Player, amount: number) => void;
+  cashOut: (player: Player, amount: number) => void;
+  editMovement: (movementIndex: number, amount: number) => void;
+  deleteMovement: (movementIndex: number) => void;
+  isInGame: (player: Player) => boolean;
+  totalBalance: () => number;
+  players: () => Record<Player, number>;
+  getMovements: () => string[];
+  calculateTransfers: () => string[];
+}
+
+class Table implements PokerTable {
+  private readonly formatMoney: (amount: number) => string;
   private readonly movements: Movement[] = [];
   private readonly aliases: Record<Player, string> = {};
 
@@ -23,23 +37,16 @@ class Table {
   static balanceNotZeroError = "La suma de los balances no es cero: ";
   static movementNotFoundError = "Movimiento no encontrado";
 
-  private playerIsInGame(player: Player) {
-    const buyInQuantity = this.movements.filter(
-      (m) => m.type === "BuyIn" && m.player === player,
-    ).length;
-    const cashOutQuantity = this.movements.filter(
-      (m) => m.type === "CashOut" && m.player === player,
-    ).length;
-
-    return buyInQuantity > cashOutQuantity;
+  constructor(formatMoney: (amount: number) => string = (amount) => amount.toString()) {
+    this.formatMoney = formatMoney;
   }
 
   private assertPlayerIsInGame(player: string) {
-    if (!this.playerIsInGame(player)) throw new Error(Table.playerNotFoundError);
+    if (!this.isInGame(player)) throw new Error(Table.playerNotFoundError);
   }
 
   private assertPlayerIsNotInGame(player: string) {
-    if (this.playerIsInGame(player)) throw new Error(Table.playerAlreadyInGameError);
+    if (this.isInGame(player)) throw new Error(Table.playerAlreadyInGameError);
   }
 
   private assertAmountIsZeroOrPositive(amount: number) {
@@ -50,11 +57,22 @@ class Table {
     if (amount <= 0) throw new Error(Table.amountMustBePositiveError);
   }
 
+  isInGame(player: Player) {
+    const buyInQuantity = this.movements.filter(
+      (m) => m.type === "BuyIn" && m.player === player,
+    ).length;
+    const cashOutQuantity = this.movements.filter(
+      (m) => m.type === "CashOut" && m.player === player,
+    ).length;
+
+    return buyInQuantity > cashOutQuantity;
+  }
+
   addPlayer(player: Player, alias: string, amount: number) {
     this.assertAmountIsPositive(amount);
     this.assertPlayerIsNotInGame(player);
 
-    this.aliases[player] = alias;
+    this.aliases[player] ||= alias;
     this.movements.push({ player, amount: -amount, type: "BuyIn" });
   }
 
@@ -70,15 +88,14 @@ class Table {
     this.movements.push({ player, amount, type: "CashOut" });
   }
 
-  editMovement(movementIndex: number, player: Player, amount: number) {
+  editMovement(movementIndex: number, amount: number) {
     const currentMovement = this.movements[movementIndex];
 
     if (!currentMovement) throw new Error(Table.movementNotFoundError);
 
     this.movements[movementIndex] = {
-      player,
+      ...currentMovement,
       amount: currentMovement.amount < 0 ? -amount : amount,
-      type: currentMovement.type,
     };
   }
 
@@ -104,9 +121,12 @@ class Table {
 
   getMovements() {
     const types: Record<MovementType, (movement: Movement) => string> = {
-      BuyIn: (movement: Movement) => `${movement.player} entró con ${-movement.amount}`,
-      ReBuy: (movement: Movement) => `${movement.player} recompró ${-movement.amount}`,
-      CashOut: (movement: Movement) => `${movement.player} se fué con ${movement.amount}`,
+      BuyIn: (movement: Movement) =>
+        `${movement.player} entró con ${this.formatMoney(-movement.amount)}`,
+      ReBuy: (movement: Movement) =>
+        `${movement.player} agregó ${this.formatMoney(-movement.amount)}`,
+      CashOut: (movement: Movement) =>
+        `${movement.player} se fué con ${this.formatMoney(movement.amount)}`,
     };
 
     return this.movements.map((movement) => types[movement.type](movement));
@@ -144,7 +164,7 @@ class Table {
       debtor.amount === 0 ? debtors.shift() : debtors.sort(byAmount);
 
       result.push(
-        `${debtor.name} le debe ${settledAmount} a ${creditor.name} (${this.aliases[creditor.name]})`,
+        `${debtor.name} le debe ${this.formatMoney(settledAmount)} a ${creditor.name} (${this.aliases[creditor.name]})`,
       );
     }
 
@@ -152,4 +172,5 @@ class Table {
   }
 }
 
-export default Table;
+export type { PokerTable };
+export { Table };
