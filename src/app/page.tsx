@@ -116,6 +116,8 @@ function Home() {
     setTimeout(() => setCopyReady(false), 2000);
   };
 
+  const showDebts = table.totalBalance() === 0 && table.calculateTransfers().length > 0;
+
   return (
     <main>
       <TableBackground>
@@ -174,7 +176,7 @@ function Home() {
               </li>
             ))}
           </Section>
-          {table.totalBalance() === 0 ? (
+          {showDebts ? (
             <Section
               button={
                 <Button size="icon" variant="outline" onClick={handleCopy}>
