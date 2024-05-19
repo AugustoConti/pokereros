@@ -1,9 +1,10 @@
 "use client";
-import { Check, Copy, Spade } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { Check, ChevronDown, Copy, Spade } from "lucide-react";
+import { type ReactNode, useEffect, useState } from "react";
 
 import DeleteMovementForm from "@/app/DeleteMovementForm";
 import EditMovementForm from "@/app/EditMovementForm";
+import ResetTableForm from "@/app/ResetTableForm";
 import { Button } from "@/components/ui/button";
 import { cn, formatMoney } from "@/lib/utils";
 import { type PokerTable } from "@/models/table";
@@ -15,8 +16,8 @@ import { useTable } from "./useTable";
 
 function TableBackground({ children }: { children: ReactNode }) {
   return (
-    <div className="relative flex h-screen items-center justify-center bg-gray-700 shadow-inner">
-      <div className="absolute h-screen w-screen bg-[url('/poker_icons.png')] shadow-[inset_0_0_200px_70px_rgba(0,0,0,0.5)]" />
+    <div className="relative flex h-[calc(100vh-3rem)] items-center justify-center bg-gray-700 shadow-inner">
+      <div className="absolute h-[calc(100vh-3rem)] w-screen bg-[url('/poker_icons.png')] shadow-[inset_0_0_200px_70px_rgba(0,0,0,0.5)]" />
       <div className="relative h-3/4 w-3/4 rounded-full bg-gray-700 shadow-[inset_0_0_13px_13px_rgb(0,0,0)]">
         <div className="absolute left-1/2 top-1/2 flex h-[calc(100%-5rem)] w-[calc(100%-5rem)] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-green-700 shadow-[0_0_13px_13px_rgb(0,0,0),_inset_0_0_13px_13px_rgba(0,0,0,0.3)]">
           <div className="h-[calc(100%-3rem)] w-[calc(100%-3rem)] rounded-full border-2 border-gray-300" />
@@ -25,6 +26,7 @@ function TableBackground({ children }: { children: ReactNode }) {
       <ul className="absolute flex h-full w-full items-center justify-center text-center">
         {children}
       </ul>
+      <ChevronDown className="absolute bottom-0 left-1/2 h-10 w-10 -translate-x-1/2 transform text-gray-500" />
     </div>
   );
 }
@@ -63,7 +65,6 @@ function Seat({
 }) {
   return (
     <div
-      key={player}
       className={`absolute max-w-40 -translate-x-1/2 -translate-y-1/2 space-y-2 rounded-md bg-black/30 px-4 py-3 shadow backdrop-blur-lg`}
       data-testid={`seat-${player}`}
       style={getSeatPosition(i, total)}
@@ -105,7 +106,7 @@ function Section({
 }
 
 function Home() {
-  const table = useTable();
+  const { table, resetTable } = useTable();
   const players = Object.entries(table.players());
   const playersInGame = players.filter(([player]) => table.isInGame(player));
 
@@ -146,7 +147,7 @@ function Home() {
           </h1>
         </header>
         <div className="grid gap-3 md:grid-cols-2">
-          <Section button={<AddPlayerForm table={table} />} title="☠️ Jugadores">
+          <Section button={<ResetTableForm resetTable={resetTable} />} title="☠️ Jugadores">
             {players.map(([player, balance]) => (
               <div
                 key={player}
@@ -168,10 +169,15 @@ function Home() {
           <Section title="📝 Logs">
             {table.getMovements().map((movement, i) => (
               <li key={i} className="flex items-center justify-between space-x-4">
-                <p className="flex-1 overflow-hidden">{movement}</p>
+                <p className="flex-1 overflow-hidden">{movement.description}</p>
                 <div className="space-x-1">
-                  <EditMovementForm index={i} movement={movement} table={table} />
-                  <DeleteMovementForm index={i} movement={movement} table={table} />
+                  <EditMovementForm
+                    key={`${i}-${movement.amount}`}
+                    index={i}
+                    table={table}
+                    {...movement}
+                  />
+                  <DeleteMovementForm index={i} table={table} {...movement} />
                 </div>
               </li>
             ))}
@@ -202,5 +208,15 @@ function Home() {
   );
 }
 
+function Page() {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  return isClient ? <Home /> : null;
+}
+
 // eslint-disable-next-line import/no-unused-modules
-export default Home;
+export default Page;

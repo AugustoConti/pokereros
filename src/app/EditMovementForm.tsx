@@ -27,16 +27,20 @@ type EditMovementSchema = z.infer<typeof editMovementSchema>;
 function EditMovementForm({
   table,
   index,
-  movement,
+  player,
+  amount,
+  description,
 }: {
   table: PokerTable;
   index: number;
-  movement: string;
+  player: string;
+  amount: number;
+  description: string;
 }) {
   const [open, setOpen] = useState(false);
   const methods = useForm<EditMovementSchema>({
     resolver: zodResolver(editMovementSchema),
-    defaultValues: { amount: 0 },
+    defaultValues: { amount },
   });
 
   const handleEditMovement = async ({ amount }: EditMovementSchema) => {
@@ -65,8 +69,8 @@ function EditMovementForm({
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Modificar movimiento</DialogTitle>
-          <DialogDescription>{movement}</DialogDescription>
+          <DialogTitle>Modificar movimiento de {player}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <Form className="space-y-4" methods={methods} onSubmit={handleEditMovement}>
           <div className="grid gap-2">

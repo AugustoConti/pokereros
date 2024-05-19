@@ -1,5 +1,3 @@
-import type { PokerTable } from "@/models/table";
-
 import { Check, Trash2 } from "lucide-react";
 import { useState } from "react";
 
@@ -14,23 +12,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-function DeleteMovementForm({
-  table,
-  index,
-  player,
-  amount: _,
-  description,
-}: {
-  table: PokerTable;
-  index: number;
-  player: string;
-  amount: number;
-  description: string;
-}) {
+function ResetTableForm({ resetTable }: { resetTable: () => void }) {
   const [open, setOpen] = useState(false);
 
-  const handleDeleteMovement = () => {
-    table.deleteMovement(index);
+  const handleReset = () => {
+    resetTable();
     setOpen(false);
   };
 
@@ -48,17 +34,12 @@ function DeleteMovementForm({
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>⚠️ Borrar movimiento de {player}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
+          <DialogTitle>Resetear la mesa ⚠️</DialogTitle>
+          <DialogDescription>Arrancar una mesa nueva</DialogDescription>
         </DialogHeader>
         <p className="text-center text-gray-400">Estás seguro pa? 🤔</p>
         <DialogFooter>
-          <Button
-            aria-label="submit"
-            size="icon"
-            variant="destructive"
-            onClick={handleDeleteMovement}
-          >
+          <Button aria-label="submit" size="icon" variant="destructive" onClick={handleReset}>
             <Check className="h-4 w-4" />
           </Button>
         </DialogFooter>
@@ -67,4 +48,4 @@ function DeleteMovementForm({
   );
 }
 
-export default DeleteMovementForm;
+export default ResetTableForm;

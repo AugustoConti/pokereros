@@ -1,13 +1,16 @@
+import { z } from "zod";
+
+const MovementTypeEnum = z.enum(["BuyIn", "ReBuy", "CashOut"]);
+
 type Player = string;
-type MovementType = "BuyIn" | "ReBuy" | "CashOut";
+type MovementType = z.infer<typeof MovementTypeEnum>;
 type Movement = {
   player: Player;
   type: MovementType;
   amount: number;
 };
 
-// TODO: guardar en sessionStorage o localStorage
-// TODO: persistir en un DB
+// TODO: persistir en una DB
 // TODO: registrar usuarios, tenant x mesa/usuario ?
 // TODO: reportes: tap10 de ganadores (en AR$ y en U$D), top10 de perdedores ?
 
@@ -22,14 +25,25 @@ interface PokerTable {
   isInGame: (player: Player) => boolean;
   totalBalance: () => number;
   players: () => Record<Player, number>;
-  getMovements: () => string[];
+  getMovements: () => Array<{ player: string; amount: number; description: string }>;
   calculateTransfers: () => string[];
 }
 
+const tableSchema = z.object({
+  movements: z.array(
+    z.object({
+      player: z.string(),
+      type: MovementTypeEnum,
+      amount: z.number(),
+    }),
+  ),
+  aliases: z.object({}),
+});
+
 class Table implements PokerTable {
   private readonly formatMoney: (amount: number) => string;
-  private readonly movements: Movement[] = [];
-  private readonly aliases: Record<Player, string> = {};
+  private readonly movements: Movement[];
+  private readonly aliases: Record<Player, string>;
 
   static playerAlreadyInGameError = "Jugador ya está en la mesa";
   static playerNotFoundError = "Jugador no encontrado";
@@ -37,8 +51,27 @@ class Table implements PokerTable {
   static balanceNotZeroError = "La suma de los balances no es cero: ";
   static movementNotFoundError = "Movimiento no encontrado";
 
-  constructor(formatMoney: (amount: number) => string = (amount) => amount.toString()) {
-    this.formatMoney = formatMoney;
+  static fromJSON(data: unknown) {
+    const { movements, aliases } = tableSchema.parse(data);
+
+    return new Table(undefined, movements, aliases);
+  }
+
+  constructor(
+    formatMoney?: (amount: number) => string,
+    movements?: Movement[],
+    aliases?: Record<Player, string>,
+  ) {
+    this.formatMoney = formatMoney ?? ((amount: number) => amount.toString());
+    this.movements = movements ?? [];
+    this.aliases = aliases ?? {};
+  }
+
+  toJSON() {
+    return {
+      movements: this.movements,
+      aliases: this.aliases,
+    };
   }
 
   private assertPlayerIsInGame(player: string) {
@@ -129,7 +162,11 @@ class Table implements PokerTable {
         `${movement.player} se fué con ${this.formatMoney(movement.amount)}`,
     };
 
-    return this.movements.map((movement) => types[movement.type](movement));
+    return this.movements.map((movement) => ({
+      player: movement.player,
+      amount: movement.amount === 0 ? 0 : -movement.amount,
+      description: types[movement.type](movement),
+    }));
   }
 
   calculateTransfers() {
