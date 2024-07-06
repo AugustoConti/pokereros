@@ -10,24 +10,19 @@ type Movement = {
   amount: number;
 };
 
+// TODO: sincronizar mesa con otro dispositivo
 // TODO: persistir en una DB
 // TODO: registrar usuarios, tenant x mesa/usuario ?
-// TODO: reportes: tap10 de ganadores (en AR$ y en U$D), top10 de perdedores ?
+// TODO: reportes: tap10 de ganadores (en AR$ actualizado por inflacion y en U$D), top10 de perdedores ?
 
 const byAmount = (a: { amount: number }, b: { amount: number }) => b.amount - a.amount;
 
-interface PokerTable {
-  addPlayer: (player: Player, alias: string, amount: number) => void;
-  reBuy: (player: Player, amount: number) => void;
-  cashOut: (player: Player, amount: number) => void;
-  editMovement: (movementIndex: number, amount: number) => void;
-  deleteMovement: (movementIndex: number) => void;
-  isInGame: (player: Player) => boolean;
-  totalBalance: () => number;
-  players: () => Record<Player, number>;
-  getMovements: () => Array<{ player: string; amount: number; description: string }>;
-  calculateTransfers: () => string[];
-}
+type FunctionPropertyNames<T> = {
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  [K in keyof T]: T[K] extends Function ? K : never;
+}[keyof T];
+
+type PokerTable = Pick<Table, FunctionPropertyNames<Table>>;
 
 const tableSchema = z.object({
   movements: z.array(
@@ -37,10 +32,10 @@ const tableSchema = z.object({
       amount: z.number(),
     }),
   ),
-  aliases: z.object({}),
+  aliases: z.record(z.string()),
 });
 
-class Table implements PokerTable {
+class Table {
   private readonly formatMoney: (amount: number) => string;
   private readonly movements: Movement[];
   private readonly aliases: Record<Player, string>;

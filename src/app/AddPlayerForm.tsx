@@ -1,7 +1,7 @@
 import type { PokerTable } from "@/models/table";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, UserPlus, Skull } from "lucide-react";
+import { Check, UserPlus, Skull, Crown } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -26,7 +26,15 @@ const addPlayerSchema = z.object({
 
 type AddPlayerSchema = z.infer<typeof addPlayerSchema>;
 
-function AddPlayerForm({ table, player }: { table: PokerTable; player?: string }) {
+function AddPlayerForm({
+  table,
+  player,
+  balance,
+}: {
+  table: PokerTable;
+  player?: string;
+  balance?: number;
+}) {
   const [open, setOpen] = useState(false);
   const methods = useForm<AddPlayerSchema>({
     resolver: zodResolver(addPlayerSchema),
@@ -36,6 +44,7 @@ function AddPlayerForm({ table, player }: { table: PokerTable; player?: string }
   const handleAddPlayer = async ({ name, alias, amount }: AddPlayerSchema) => {
     try {
       table.addPlayer(name, alias, amount);
+      localStorage.setItem(name.toLowerCase(), alias);
       setOpen(false);
     } catch (e) {
       const message = e instanceof Error ? e.message : "Ocurrió un error inesperado.";
@@ -53,13 +62,14 @@ function AddPlayerForm({ table, player }: { table: PokerTable; player?: string }
       }}
     >
       <DialogTrigger asChild>
-        <Button
-          aria-label="add player"
-          className={player ? "text-violet-500" : ""}
-          size="icon"
-          variant="outline"
-        >
-          {player ? <Skull className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+        <Button aria-label="add player" size="icon" variant="outline">
+          {!player ? (
+            <UserPlus className="h-4 w-4" />
+          ) : balance && balance >= 0 ? (
+            <Crown className="h-4 w-4 text-amber-500" />
+          ) : (
+            <Skull className="h-4 w-4 text-violet-500" />
+          )}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
@@ -73,7 +83,18 @@ function AddPlayerForm({ table, player }: { table: PokerTable; player?: string }
           <div className="grid gap-2">
             {!player ? (
               <>
-                <InputField<AddPlayerSchema> label="Nombre" name="name" />
+                <InputField<AddPlayerSchema>
+                  label="Nombre"
+                  name="name"
+                  onChange={(e) => {
+                    const name = e.target.value;
+                    const alias = localStorage.getItem(name.toLowerCase());
+
+                    if (alias) {
+                      methods.setValue("alias", alias);
+                    }
+                  }}
+                />
                 <InputField<AddPlayerSchema> label="Alias" name="alias" />
               </>
             ) : null}

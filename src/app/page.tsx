@@ -1,5 +1,6 @@
 "use client";
-import { Check, ChevronDown, Copy, Spade } from "lucide-react";
+import { Check, ChevronDown, CircleDotDashed, Copy, Heart, Spade } from "lucide-react";
+import Link from "next/link";
 import { type ReactNode, useEffect, useState } from "react";
 
 import DeleteMovementForm from "@/app/DeleteMovementForm";
@@ -72,14 +73,8 @@ function Seat({
       <p className="break-words text-sm">{player}</p>
       <PlayerBalance balance={balance} />
       <div className="flex justify-center space-x-1">
-        {table.isInGame(player) ? (
-          <>
-            <ReBuyForm player={player} table={table} />
-            <CashOutForm player={player} table={table} />
-          </>
-        ) : (
-          <AddPlayerForm player={player} table={table} />
-        )}
+        <ReBuyForm player={player} table={table} />
+        <CashOutForm player={player} table={table} />
       </div>
     </div>
   );
@@ -90,7 +85,7 @@ function Section({
   children,
   button,
 }: {
-  title: string;
+  title: ReactNode;
   children: ReactNode;
   button?: ReactNode;
 }) {
@@ -142,9 +137,24 @@ function Home() {
       <div className="space-y-4 p-4">
         <header className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold">
-            <Spade className="mr-2 inline-block h-6 w-6" />
+            <Spade className="mr-2 inline-block h-6 w-6" fill="currentColor" />
             Pokereros
           </h1>
+          <div className="flex space-x-2">
+            <Link
+              className="flex items-center rounded border border-gray-500 p-1 text-amber-500 hover:bg-gray-800"
+              href="./fichas"
+            >
+              <CircleDotDashed />
+            </Link>
+            <Link
+              className="flex items-center rounded border border-gray-500 p-1 text-rose-500 hover:bg-gray-800"
+              href="./manos"
+            >
+              <span className="text-xl font-bold">A</span>
+              <Heart fill="currentColor" />
+            </Link>
+          </div>
         </header>
         <div className="grid gap-3 md:grid-cols-2">
           <Section button={<ResetTableForm resetTable={resetTable} />} title="☠️ Jugadores">
@@ -156,9 +166,7 @@ function Home() {
               >
                 <div className="flex items-center space-x-2 overflow-hidden">
                   {!table.isInGame(player) ? (
-                    <div>
-                      <AddPlayerForm player={player} table={table} />
-                    </div>
+                    <AddPlayerForm balance={balance} player={player} table={table} />
                   ) : null}
                   <p>{player}</p>
                 </div>
