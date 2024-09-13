@@ -1,17 +1,24 @@
 /* eslint-disable padding-line-between-statements */
 import { expect, it, describe } from "vitest";
+import { ZodError } from "zod";
 
 import { Table } from "./table";
 
+const uuid = "91694f7a-9fe3-4fca-aad4-433700d3e4df";
+
+function tableWith({ id }: { id?: string } = {}) {
+  return new Table(id ?? uuid);
+}
+
 describe("players", () => {
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
 
     expect(table.players()).toEqual({});
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
 
     table.addPlayer("A", "A", 100);
 
@@ -19,26 +26,26 @@ describe("players", () => {
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
 
     expect(() => table.addPlayer("A", "A", -100)).toThrow(Table.amountMustBePositiveError);
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
 
     expect(() => table.addPlayer("A", "A", 0)).toThrow(Table.amountMustBePositiveError);
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("A", "A", 100);
 
     expect(() => table.addPlayer("A", "A", 100)).toThrow(Table.playerAlreadyInGameError);
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
 
     table.addPlayer("A", "A", 100);
     table.addPlayer("B", "A", 100);
@@ -47,7 +54,7 @@ describe("players", () => {
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("A", "A", 100);
 
     table.reBuy("A", 100);
@@ -56,19 +63,19 @@ describe("players", () => {
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
 
     expect(() => table.reBuy("A", 100)).toThrow(Table.playerNotFoundError);
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
 
     expect(() => table.reBuy("A", -100)).toThrow(Table.amountMustBePositiveError);
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("A", "A", 100);
     table.cashOut("A", 0);
 
@@ -76,19 +83,19 @@ describe("players", () => {
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
 
     expect(() => table.cashOut("A", 100)).toThrow(Table.playerNotFoundError);
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
 
     expect(() => table.cashOut("A", -100)).toThrow(Table.amountMustBePositiveError);
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("A", "A", 100);
 
     table.cashOut("A", 100);
@@ -97,7 +104,7 @@ describe("players", () => {
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("A", "A", 100);
 
     table.cashOut("A", 0);
@@ -106,7 +113,7 @@ describe("players", () => {
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("A", "A", 100);
 
     table.cashOut("A", 200);
@@ -115,7 +122,7 @@ describe("players", () => {
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("A", "A", 100);
     table.cashOut("A", 0);
 
@@ -123,7 +130,7 @@ describe("players", () => {
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("B", "A", 100);
     table.cashOut("B", 0);
     table.addPlayer("A", "A", 100);
@@ -133,7 +140,7 @@ describe("players", () => {
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("A", "A", 100);
     table.cashOut("A", 0);
 
@@ -143,7 +150,7 @@ describe("players", () => {
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("A", "A", 100);
     table.cashOut("A", 0);
     table.addPlayer("A", "A", 100);
@@ -154,20 +161,20 @@ describe("players", () => {
 
 describe("is in game", () => {
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
 
     expect(table.isInGame("A")).toBe(false);
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("A", "A", 100);
 
     expect(table.isInGame("A")).toBe(true);
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("A", "A", 100);
     table.cashOut("A", 0);
 
@@ -175,7 +182,7 @@ describe("is in game", () => {
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("A", "A", 100);
     table.cashOut("A", 0);
     table.addPlayer("A", "A", 100);
@@ -192,13 +199,13 @@ const mov = (player: string, amount: number, description: string) => ({
 
 describe("movements", () => {
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
 
     expect(table.getMovements()).toEqual([]);
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
 
     table.addPlayer("A", "A", 100);
 
@@ -206,7 +213,7 @@ describe("movements", () => {
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
 
     table.addPlayer("A", "A", 100);
     table.addPlayer("B", "A", 100);
@@ -218,7 +225,7 @@ describe("movements", () => {
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("A", "A", 100);
 
     table.reBuy("A", 100);
@@ -230,7 +237,7 @@ describe("movements", () => {
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("A", "A", 100);
 
     table.cashOut("A", 0);
@@ -244,13 +251,13 @@ describe("movements", () => {
 
 describe("balance", () => {
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
 
     expect(table.totalBalance()).toBe(0);
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
 
     table.addPlayer("A", "A", 100);
 
@@ -258,7 +265,7 @@ describe("balance", () => {
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("A", "A", 100);
 
     table.reBuy("A", 50);
@@ -267,7 +274,7 @@ describe("balance", () => {
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
 
     table.addPlayer("A", "A", 100);
     table.addPlayer("B", "A", 100);
@@ -276,7 +283,7 @@ describe("balance", () => {
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("A", "A", 100);
     table.cashOut("A", 100);
 
@@ -286,13 +293,13 @@ describe("balance", () => {
 
 describe("edit movements", () => {
   it("cant edit movement does not exist", () => {
-    const table = new Table();
+    const table = tableWith();
 
     expect(() => table.editMovement(0, 100)).toThrow(Table.movementNotFoundError);
   });
 
   it("edit movement of add player", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("A", "A", 100);
 
     table.editMovement(0, 200);
@@ -303,7 +310,7 @@ describe("edit movements", () => {
   });
 
   it("edit movement of rebuy player", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("A", "A", 100);
     table.reBuy("A", 100);
 
@@ -318,7 +325,7 @@ describe("edit movements", () => {
   });
 
   it("edit movement of cashOut player", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("A", "A", 100);
     table.cashOut("A", 0);
 
@@ -333,7 +340,7 @@ describe("edit movements", () => {
   });
 
   it("edit movement of cashOut player", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("A", "A", 100);
     table.cashOut("A", 0);
 
@@ -347,7 +354,7 @@ describe("edit movements", () => {
 
 describe("calculate transfers", () => {
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("A", "A", 100);
     table.cashOut("A", 100);
 
@@ -355,7 +362,7 @@ describe("calculate transfers", () => {
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("A", "A", 100);
     table.addPlayer("B", "A", 50);
     table.cashOut("A", 100);
@@ -364,7 +371,7 @@ describe("calculate transfers", () => {
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("A", "alias.A", 100);
     table.addPlayer("B", "alias.B", 50);
     table.cashOut("A", 0);
@@ -374,7 +381,7 @@ describe("calculate transfers", () => {
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("A", "alias.A", 100);
     table.addPlayer("B", "alias.B", 100);
     table.cashOut("A", 50);
@@ -384,7 +391,7 @@ describe("calculate transfers", () => {
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("A", "alias.A", 100);
     table.addPlayer("B", "alias.B", 100);
     table.cashOut("A", 100);
@@ -394,7 +401,7 @@ describe("calculate transfers", () => {
   });
 
   it("uno le debe a varios", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("A", "alias.A", 100);
     table.addPlayer("B", "alias.B", 100);
     table.addPlayer("C", "alias.C", 100);
@@ -409,7 +416,7 @@ describe("calculate transfers", () => {
   });
 
   it("varios le deben a uno", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("A", "alias.A", 100);
     table.addPlayer("B", "alias.B", 100);
     table.addPlayer("C", "alias.C", 100);
@@ -424,7 +431,7 @@ describe("calculate transfers", () => {
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("A", "alias.A", 100);
     table.addPlayer("B", "alias.B", 100);
     table.addPlayer("C", "alias.C", 100);
@@ -441,7 +448,7 @@ describe("calculate transfers", () => {
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("A", "alias.A", 100);
     table.addPlayer("B", "alias.B", 100);
     table.addPlayer("C", "alias.C", 100);
@@ -461,7 +468,7 @@ describe("calculate transfers", () => {
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("A", "alias.A", 100);
     table.addPlayer("B", "alias.B", 100);
     table.addPlayer("C", "alias.C", 100);
@@ -480,7 +487,7 @@ describe("calculate transfers", () => {
   });
 
   it("asd", () => {
-    const table = new Table();
+    const table = tableWith();
     table.addPlayer("A", "alias.A", 100);
     table.addPlayer("B", "alias.B", 100);
     table.addPlayer("C", "alias.C", 100);
@@ -502,13 +509,13 @@ describe("calculate transfers", () => {
 
 describe("json", () => {
   it("empty table to json", () => {
-    const table = new Table();
+    const table = tableWith({ id: uuid });
 
-    expect(table.toJSON()).toEqual({ movements: [], aliases: {} });
+    expect(table.toJSON()).toEqual({ id: uuid, movements: [], aliases: {} });
   });
 
   it("table with movements to json", () => {
-    const table = new Table();
+    const table = tableWith({ id: uuid });
     table.addPlayer("A", "alias.A", 100);
     table.addPlayer("B", "alias.B", 100);
     table.reBuy("A", 100);
@@ -516,6 +523,7 @@ describe("json", () => {
     table.cashOut("B", 200);
 
     expect(table.toJSON()).toEqual({
+      id: uuid,
       movements: [
         { player: "A", amount: -100, type: "BuyIn" },
         { player: "B", amount: -100, type: "BuyIn" },
@@ -528,7 +536,7 @@ describe("json", () => {
   });
 
   it("empty table from json", () => {
-    const table = Table.fromJSON({ movements: [], aliases: {} });
+    const table = Table.fromJSON({ id: uuid, movements: [], aliases: {} });
 
     expect(table.players()).toEqual({});
     expect(table.getMovements()).toEqual([]);
@@ -537,6 +545,7 @@ describe("json", () => {
 
   it("table with movements from json", () => {
     const table = Table.fromJSON({
+      id: uuid,
       movements: [
         { player: "A", amount: -100, type: "BuyIn" },
         { player: "B", amount: -100, type: "BuyIn" },
@@ -556,5 +565,9 @@ describe("json", () => {
       mov("B", -200, "B se fué con 200"),
     ]);
     expect(table.totalBalance()).toBe(0);
+  });
+
+  it("broken json", () => {
+    expect(() => Table.fromJSON({ id: "1", movements: [], aliases: {} })).toThrow(ZodError);
   });
 });

@@ -11,6 +11,7 @@ import { cn, formatMoney } from "@/lib/utils";
 import { type PokerTable } from "@/models/table";
 
 import AddPlayerForm from "./AddPlayerForm";
+import { postTable } from "./api";
 import CashOutForm from "./CashOutForm";
 import ReBuyForm from "./ReBuyForm";
 import { useTable } from "./useTable";
@@ -100,8 +101,8 @@ function Section({
   );
 }
 
-function Home() {
-  const { table, resetTable } = useTable();
+function Home({ onSave }: { onSave: (table: PokerTable) => Promise<void> }) {
+  const { table, resetTable } = useTable(onSave);
   const players = Object.entries(table.players());
   const playersInGame = players.filter(([player]) => table.isInGame(player));
 
@@ -216,14 +217,14 @@ function Home() {
   );
 }
 
-function Page() {
+function Page({ onSave } = { onSave: postTable }) {
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  return isClient ? <Home /> : null;
+  return isClient ? <Home onSave={onSave} /> : null;
 }
 
 // eslint-disable-next-line import/no-unused-modules

@@ -4,21 +4,25 @@ import { describe, expect, it } from "vitest";
 
 import Page from "../app/page";
 
+function HomePage() {
+  return <Page onSave={async () => await Promise.resolve()} />;
+}
+
 describe("Poker", () => {
   it("Booting up the app from the index file does not break anything", () => {
-    render(<Page />);
+    render(<HomePage />);
 
     expect(screen.getByRole("heading", { name: "Pokereros" })).toBeInTheDocument();
   });
 
   it("Start with $0 total balance", () => {
-    render(<Page />);
+    render(<HomePage />);
 
     expect(screen.getByTestId("total-balance")).toHaveTextContent("$ 0");
   });
 
   it("Add player", async () => {
-    render(<Page />);
+    render(<HomePage />);
     const user = userEvent.setup();
     const addPlayerButton = screen.getAllByRole("button", { name: /player/i })[0];
 

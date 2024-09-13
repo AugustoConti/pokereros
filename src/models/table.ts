@@ -25,6 +25,7 @@ type FunctionPropertyNames<T> = {
 type PokerTable = Pick<Table, FunctionPropertyNames<Table>>;
 
 const tableSchema = z.object({
+  id: z.string().uuid(),
   movements: z.array(
     z.object({
       player: z.string(),
@@ -36,6 +37,7 @@ const tableSchema = z.object({
 });
 
 class Table {
+  private readonly id: string;
   private readonly formatMoney: (amount: number) => string;
   private readonly movements: Movement[];
   private readonly aliases: Record<Player, string>;
@@ -46,24 +48,31 @@ class Table {
   static balanceNotZeroError = "La suma de los balances no es cero: ";
   static movementNotFoundError = "Movimiento no encontrado";
 
-  static fromJSON(data: unknown) {
-    const { movements, aliases } = tableSchema.parse(data);
+  static fromJSON(data: unknown, formatMoney?: (amount: number) => string) {
+    const { id, movements, aliases } = tableSchema.parse(data);
 
-    return new Table(undefined, movements, aliases);
+    return new Table(id, formatMoney, movements, aliases);
   }
 
   constructor(
+    id: string,
     formatMoney?: (amount: number) => string,
     movements?: Movement[],
     aliases?: Record<Player, string>,
   ) {
     this.formatMoney = formatMoney ?? ((amount: number) => amount.toString());
+    this.id = id;
     this.movements = movements ?? [];
     this.aliases = aliases ?? {};
   }
 
+  getId() {
+    return this.id;
+  }
+
   toJSON() {
     return {
+      id: this.id,
       movements: this.movements,
       aliases: this.aliases,
     };
