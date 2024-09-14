@@ -21,7 +21,7 @@ const saveTableToLocalStorage = (table: Table) => {
   localStorage.setItem("table", JSON.stringify(table.toJSON()));
 };
 
-function useTable(onSave: (table: Table) => Promise<void>) {
+function useTable(onSave: (id: string, table: string) => Promise<void>) {
   const forceUpdate = useReducer(() => ({}), {})[1];
   const [table, setTable] = useState(
     () => getTableFromLocalStorage() ?? new Table(uuid(), formatMoney),
@@ -31,7 +31,7 @@ function useTable(onSave: (table: Table) => Promise<void>) {
     (table: Table) => {
       saveTableToLocalStorage(table);
       forceUpdate();
-      void onSave(table);
+      void onSave(table.getId(), JSON.stringify(table.toJSON()));
     },
     [forceUpdate, onSave],
   );
