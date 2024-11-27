@@ -8,14 +8,23 @@ import {
   Heart,
   Spade,
   Link as LinkIcon,
+  QrCode,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { type ReactNode, useState } from "react";
 
 import DeleteMovementForm from "@/app/DeleteMovementForm";
 import EditMovementForm from "@/app/EditMovementForm";
 import ResetTableForm from "@/app/ResetTableForm";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { cn, formatMoney } from "@/lib/utils";
 import { Table, type PokerTable } from "@/models/table";
 
@@ -116,10 +125,15 @@ function TableComponent({ table, resetTable }: { table: PokerTable; resetTable?:
   const players = Object.entries(table.players());
   const playersInGame = players.filter(([player]) => table.isInGame(player));
   const readOnly = !resetTable;
+  const tableUrl = () => `${window.location.origin}/${table.getId()}`;
 
+  const router = useRouter();
+  const pushToHome = async () => router.push("/");
+
+  const [showQRLink, setShowQRLink] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const handleShareLink = () => {
-    void navigator.clipboard.writeText(`${window.location.origin}/${table.getId()}`);
+    void navigator.clipboard.writeText(tableUrl());
     setLinkCopied(true);
     setTimeout(() => setLinkCopied(false), 2000);
   };
@@ -132,6 +146,7 @@ function TableComponent({ table, resetTable }: { table: PokerTable; resetTable?:
   };
 
   const showDebts = table.totalBalance() === 0 && table.calculateTransfers().length > 0;
+  const movements = table.getMovements();
 
   return (
     <main>
@@ -161,6 +176,24 @@ function TableComponent({ table, resetTable }: { table: PokerTable; resetTable?:
             Pokereros
           </h1>
           <div className="flex space-x-2">
+            <Dialog open={showQRLink} onOpenChange={setShowQRLink}>
+              <DialogTrigger asChild>
+                <Button size="icon" title="Compartir enlace de invitación" variant="outline">
+                  <QrCode className="h-4 w-4" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>🫂 Compartir mesa</DialogTitle>
+                </DialogHeader>
+                <div className="my-4 flex flex-col items-center">
+                  <img
+                    alt="QR"
+                    src={`https://api.qrserver.com/v1/create-qr-code/?data=${tableUrl()}`}
+                  />
+                </div>
+              </DialogContent>
+            </Dialog>
             <Button
               size="icon"
               title="Compartir enlace de invitación"
@@ -190,42 +223,50 @@ function TableComponent({ table, resetTable }: { table: PokerTable; resetTable?:
         </header>
         <div className="grid gap-3 md:grid-cols-2">
           <Section
-            button={!readOnly ? <ResetTableForm resetTable={resetTable} /> : null}
+            button={<ResetTableForm resetTable={!readOnly ? resetTable : pushToHome} />}
             title="☠️ Jugadores"
           >
-            {players.map(([player, balance]) => (
-              <div
-                key={player}
-                className="flex items-center justify-between space-x-4"
-                data-testid={`player-${player}`}
-              >
-                <div className="flex items-center space-x-2 overflow-hidden">
-                  {!readOnly && !table.isInGame(player) ? (
-                    <AddPlayerForm balance={balance} player={player} table={table} />
-                  ) : null}
-                  <p>{player}</p>
+            {players.length > 0 ? (
+              players.map(([player, balance]) => (
+                <div
+                  key={player}
+                  className="flex items-center justify-between space-x-4"
+                  data-testid={`player-${player}`}
+                >
+                  <div className="flex items-center space-x-2 overflow-hidden">
+                    {!readOnly && !table.isInGame(player) ? (
+                      <AddPlayerForm balance={balance} player={player} table={table} />
+                    ) : null}
+                    <p>{player}</p>
+                  </div>
+                  <PlayerBalance balance={balance} />
                 </div>
-                <PlayerBalance balance={balance} />
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="py-3 text-center text-gray-500">No hay víctimas</p>
+            )}
           </Section>
           <Section title="📝 Logs">
-            {table.getMovements().map((movement, i) => (
-              <li key={i} className="flex items-center justify-between space-x-4">
-                <p className="flex-1 overflow-hidden">{movement.description}</p>
-                {!readOnly ? (
-                  <div className="space-x-1">
-                    <EditMovementForm
-                      key={`${i}-${movement.amount}`}
-                      index={i}
-                      table={table}
-                      {...movement}
-                    />
-                    <DeleteMovementForm index={i} table={table} {...movement} />
-                  </div>
-                ) : null}
-              </li>
-            ))}
+            {movements.length > 0 ? (
+              movements.map((movement, i) => (
+                <li key={i} className="flex items-center justify-between space-x-4">
+                  <p className="flex-1 overflow-hidden">{movement.description}</p>
+                  {!readOnly ? (
+                    <div className="space-x-1">
+                      <EditMovementForm
+                        key={`${i}-${movement.amount}`}
+                        index={i}
+                        table={table}
+                        {...movement}
+                      />
+                      <DeleteMovementForm index={i} table={table} {...movement} />
+                    </div>
+                  ) : null}
+                </li>
+              ))
+            ) : (
+              <p className="py-3 text-center text-gray-500">No hay logs</p>
+            )}
           </Section>
           {showDebts ? (
             <Section
@@ -253,7 +294,7 @@ function TableComponent({ table, resetTable }: { table: PokerTable; resetTable?:
   );
 }
 
-function TableFromObject({ tableData }: { tableData: unknown }) {
+function TableFromObject({ tableData }: { tableData: Record<string, unknown> }) {
   const table = Table.fromJSON(tableData, formatMoney);
 
   return <TableComponent table={table} />;

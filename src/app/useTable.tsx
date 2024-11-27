@@ -7,9 +7,9 @@ import { type PokerTable, Table } from "@/models/table";
 const getTableFromLocalStorage = () => {
   try {
     const tableFromLocalStorage = localStorage.getItem("table");
-    const data = tableFromLocalStorage ? JSON.parse(tableFromLocalStorage) : null;
 
-    if (!data) return null;
+    if (!tableFromLocalStorage) return null;
+    const data = JSON.parse(tableFromLocalStorage) as Record<string, unknown>;
 
     return Table.fromJSON(data, formatMoney);
   } catch (error) {

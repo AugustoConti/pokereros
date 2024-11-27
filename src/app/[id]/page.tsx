@@ -1,16 +1,17 @@
-import { kv } from "@vercel/kv";
+import { getTableFromDB } from "@/db/redis";
 
 import { TableFromObject } from "../Table";
 
 async function ReadOnlyTable({ params }: { params: { id: string } }) {
   const { id } = params;
-  const tableData = await kv.get(`table:${id}`);
+
+  const tableData = await getTableFromDB(id);
 
   if (!tableData) {
     return <div className="p-4">Mesa no encontrada</div>;
   }
 
-  return <TableFromObject tableData={tableData} />;
+  return <TableFromObject tableData={JSON.parse(tableData)} />;
 }
 
 // eslint-disable-next-line import/no-unused-modules

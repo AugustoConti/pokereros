@@ -10,8 +10,6 @@ type Movement = {
   amount: number;
 };
 
-// TODO: sincronizar mesa con otro dispositivo
-// TODO: persistir en una DB
 // TODO: registrar usuarios, tenant x mesa/usuario ?
 // TODO: reportes: tap10 de ganadores (en AR$ actualizado por inflacion y en U$D), top10 de perdedores ?
 
@@ -48,7 +46,7 @@ class Table {
   static balanceNotZeroError = "La suma de los balances no es cero: ";
   static movementNotFoundError = "Movimiento no encontrado";
 
-  static fromJSON(data: unknown, formatMoney?: (amount: number) => string) {
+  static fromJSON(data: Record<string, unknown>, formatMoney?: (amount: number) => string) {
     const { id, movements, aliases } = tableSchema.parse(data);
 
     return new Table(id, formatMoney, movements, aliases);

@@ -1,12 +1,13 @@
-import { kv } from "@vercel/kv";
 import { revalidatePath } from "next/cache";
+
+import { setTableInDB } from "@/db/redis";
 
 import Home from "./Home";
 
 function Page({ onSave }: { onSave?: (id: string, table: string) => Promise<void> }) {
   async function postTable(id: string, table: string) {
     "use server";
-    await kv.set(`table:${id}`, table);
+    await setTableInDB(id, table);
     revalidatePath(`/${id}`);
   }
 
