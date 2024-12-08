@@ -40,7 +40,7 @@ function EditMovementForm({
   const [open, setOpen] = useState(false);
   const methods = useForm<EditMovementSchema>({
     resolver: zodResolver(editMovementSchema),
-    defaultValues: { amount },
+    defaultValues: { amount: Math.abs(amount) },
   });
 
   const handleEditMovement = async ({ amount }: EditMovementSchema) => {
