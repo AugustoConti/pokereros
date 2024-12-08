@@ -1,8 +1,14 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import Page from "../app/page";
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: () => {},
+  }),
+}));
 
 function HomePage() {
   return <Page onSave={async () => await Promise.resolve()} />;
@@ -12,7 +18,7 @@ describe("Poker", () => {
   it("Booting up the app from the index file does not break anything", () => {
     render(<HomePage />);
 
-    expect(screen.getByRole("heading", { name: "Pokereros" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Pokereros" })).toBeDefined();
   });
 
   it("Start with $0 total balance", () => {
