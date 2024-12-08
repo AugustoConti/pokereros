@@ -13,6 +13,20 @@ export const metadata: Metadata = {
   title: "Pokereros",
   description:
     "Gestiona entradas, recompras y salidas en tus juegos de póker de forma eficiente y calcula automaticamente las deudas entre jugadores.",
+  icons: {
+    icon: [
+      {
+        media: "(prefers-color-scheme: light)",
+        url: "/logo-black.ico",
+        href: "/logo-black.ico",
+      },
+      {
+        media: "(prefers-color-scheme: dark)",
+        url: "/logo-white.ico",
+        href: "/logo-white.ico",
+      },
+    ],
+  },
 };
 
 // eslint-disable-next-line import/no-unused-modules
