@@ -93,6 +93,8 @@ const chips = [
   { value: 7500, color: "black" },
 ] as const;
 
+const bbValue = chips[1].value;
+
 const initialChips = Object.fromEntries(chips.map(({ value }) => [value, 0]));
 
 type Chips = typeof initialChips;
@@ -142,7 +144,7 @@ function ChipsPage() {
       <div className="mt-6 flex items-center space-x-4">
         <div className="flex flex-col items-center font-bold">
           <p className="text-4xl font-bold text-white">{formatMoney(total)}</p>
-          <p className="text-lg">{Math.round((total / 600) * 100) / 100} BB</p>
+          <p className="text-lg">{Math.round((total / bbValue) * 100) / 100} BB</p>
         </div>
         <Button size="icon" variant="outline" onClick={() => saveChips(initialChips)}>
           <RotateCcw className="size-4" />
