@@ -1,7 +1,7 @@
 "use client";
 import { Minus, Plus, RotateCcw, X } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,7 +69,7 @@ function PokerChip({
         className="h-14 w-16 rounded-none text-center text-xl"
         min="0"
         type="number"
-        value={count}
+        value={count || ""}
         onChange={(e) => onCountChange(Math.max(0, parseInt(e.target.value) || 0))}
       />
       <Button
@@ -93,16 +93,29 @@ const chips = [
   { value: 7500, color: "black" },
 ] as const;
 
-const initialChips = {
-  300: 0,
-  600: 0,
-  1500: 0,
-  3000: 0,
-  7500: 0,
+const initialChips = Object.fromEntries(chips.map(({ value }) => [value, 0]));
+
+type Chips = typeof initialChips;
+
+const getInitialChips = () => {
+  try {
+    const chips: Chips = JSON.parse(localStorage.getItem("chips") ?? "{}");
+
+    return { ...initialChips, ...chips };
+  } catch {
+    return initialChips;
+  }
 };
 
 function ChipsPage() {
   const [chipCounts, setChipCounts] = useState(initialChips);
+
+  useEffect(() => setChipCounts(getInitialChips()), []);
+
+  const saveChips = (chips: Chips) => {
+    localStorage.setItem("chips", JSON.stringify({ ...chipCounts, ...chips }));
+    setChipCounts({ ...chipCounts, ...chips });
+  };
 
   const total = Object.entries(chipCounts).reduce(
     (sum, [value, count]) => sum + parseInt(value) * count,
@@ -121,16 +134,17 @@ function ChipsPage() {
         <PokerChip
           key={chip.value}
           color={chip.color}
-          count={chipCounts[chip.value]}
+          count={chipCounts[chip.value] ?? 0}
           value={chip.value}
-          onCountChange={(newCount) =>
-            setChipCounts((prev) => ({ ...prev, [chip.value]: newCount }))
-          }
+          onCountChange={(newCount) => saveChips({ [chip.value]: newCount })}
         />
       ))}
-      <div className="mt-6 flex space-x-4">
-        <div className="text-4xl font-bold text-white">{formatMoney(total)}</div>
-        <Button size="icon" variant="outline" onClick={() => setChipCounts({ ...initialChips })}>
+      <div className="mt-6 flex items-center space-x-4">
+        <div className="flex flex-col items-center font-bold">
+          <p className="text-4xl font-bold text-white">{formatMoney(total)}</p>
+          <p className="text-lg">{Math.round((total / 600) * 100) / 100} BB</p>
+        </div>
+        <Button size="icon" variant="outline" onClick={() => saveChips(initialChips)}>
           <RotateCcw className="size-4" />
         </Button>
       </div>
