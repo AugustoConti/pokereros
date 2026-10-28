@@ -16,28 +16,38 @@ type Movement = {
 const byAmount = (a: { amount: number }, b: { amount: number }) => b.amount - a.amount;
 
 type FunctionPropertyNames<T> = {
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  [K in keyof T]: T[K] extends Function ? K : never;
+  [K in keyof T]: T[K] extends (...args: Array<never>) => unknown ? K : never;
 }[keyof T];
 
 type PokerTable = Pick<Table, FunctionPropertyNames<Table>>;
 
+// Limits are far above any real game; they keep a single table from flooding the database.
+const MAX_NAME_LENGTH = 200;
+const MAX_MOVEMENTS = 2000;
+const MAX_PLAYERS = 200;
+
 const tableSchema = z.object({
-  id: z.string().uuid(),
-  movements: z.array(
-    z.object({
-      player: z.string(),
-      type: MovementTypeEnum,
-      amount: z.number(),
-    }),
-  ),
-  aliases: z.record(z.string()),
+  id: z.uuid(),
+  movements: z
+    .array(
+      z.object({
+        player: z.string().max(MAX_NAME_LENGTH),
+        type: MovementTypeEnum,
+        amount: z.number(),
+      }),
+    )
+    .max(MAX_MOVEMENTS),
+  aliases: z
+    .record(z.string().max(MAX_NAME_LENGTH), z.string().max(MAX_NAME_LENGTH))
+    .refine((aliases) => Object.keys(aliases).length <= MAX_PLAYERS),
 });
+
+type TableData = z.infer<typeof tableSchema>;
 
 class Table {
   private readonly id: string;
   private readonly formatMoney: (amount: number) => string;
-  private readonly movements: Movement[];
+  private readonly movements: Array<Movement>;
   private readonly aliases: Record<Player, string>;
 
   static playerAlreadyInGameError = "Jugador ya está en la mesa";
@@ -46,7 +56,7 @@ class Table {
   static balanceNotZeroError = "La suma de los balances no es cero: ";
   static movementNotFoundError = "Movimiento no encontrado";
 
-  static fromJSON(data: Record<string, unknown>, formatMoney?: (amount: number) => string) {
+  static fromJSON(data: unknown, formatMoney?: (amount: number) => string) {
     const { id, movements, aliases } = tableSchema.parse(data);
 
     return new Table(id, formatMoney, movements, aliases);
@@ -55,7 +65,7 @@ class Table {
   constructor(
     id: string,
     formatMoney?: (amount: number) => string,
-    movements?: Movement[],
+    movements?: Array<Movement>,
     aliases?: Record<Player, string>,
   ) {
     this.formatMoney = formatMoney ?? ((amount: number) => amount.toString());
@@ -68,12 +78,20 @@ class Table {
     return this.id;
   }
 
-  toJSON() {
+  toJSON(): TableData {
     return {
       id: this.id,
       movements: this.movements,
       aliases: this.aliases,
     };
+  }
+
+  private static assertAmountIsZeroOrPositive(amount: number) {
+    if (amount < 0) throw new Error(Table.amountMustBePositiveError);
+  }
+
+  private static assertAmountIsPositive(amount: number) {
+    if (amount <= 0) throw new Error(Table.amountMustBePositiveError);
   }
 
   private assertPlayerIsInGame(player: string) {
@@ -82,14 +100,6 @@ class Table {
 
   private assertPlayerIsNotInGame(player: string) {
     if (this.isInGame(player)) throw new Error(Table.playerAlreadyInGameError);
-  }
-
-  private assertAmountIsZeroOrPositive(amount: number) {
-    if (amount < 0) throw new Error(Table.amountMustBePositiveError);
-  }
-
-  private assertAmountIsPositive(amount: number) {
-    if (amount <= 0) throw new Error(Table.amountMustBePositiveError);
   }
 
   isInGame(player: Player) {
@@ -104,7 +114,7 @@ class Table {
   }
 
   addPlayer(player: Player, alias: string, amount: number) {
-    this.assertAmountIsPositive(amount);
+    Table.assertAmountIsPositive(amount);
     this.assertPlayerIsNotInGame(player);
 
     this.aliases[player] ||= alias;
@@ -112,13 +122,13 @@ class Table {
   }
 
   reBuy(player: Player, amount: number) {
-    this.assertAmountIsPositive(amount);
+    Table.assertAmountIsPositive(amount);
     this.assertPlayerIsInGame(player);
     this.movements.push({ player, amount: -amount, type: "ReBuy" });
   }
 
   cashOut(player: Player, amount: number) {
-    this.assertAmountIsZeroOrPositive(amount);
+    Table.assertAmountIsZeroOrPositive(amount);
     this.assertPlayerIsInGame(player);
     this.movements.push({ player, amount, type: "CashOut" });
   }
@@ -139,9 +149,7 @@ class Table {
   }
 
   totalBalance() {
-    return this.movements.reduce((acc, movement) => {
-      return acc - movement.amount;
-    }, 0);
+    return this.movements.reduce((acc, movement) => acc - movement.amount, 0);
   }
 
   players(): Record<Player, number> {
@@ -211,5 +219,5 @@ class Table {
   }
 }
 
-export type { PokerTable };
-export { Table };
+export type { PokerTable, TableData };
+export { Table, tableSchema };

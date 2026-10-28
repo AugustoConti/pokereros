@@ -1,43 +1,52 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
+# Dependencies
 /node_modules
 /.pnp
-.pnp.js
-.yarn/install-state.gz
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
 
-# testing
+# Lockfiles (repo uses pnpm)
+yarn.lock
+package-lock.json
+
+# Testing
 /coverage
 
-# next.js
-/.next/
-/out/
-
-# production
+# Production / build
 /build
+/.output
+/.tanstack
 
-# misc
-.DS_Store
-*.pem
+# Environment variables
+.env*
+!.env.example
 
-# debug
+# Debug logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.pnpm-debug.log*
 
-# local env files
-.env*.local
-
-# vercel
-.vercel
-
-# typescript
+# TypeScript
 *.tsbuildinfo
 next-env.d.ts
+tsconfig.tsbuildinfo
 
+# Vercel
+.vercel
+
+# Editors & IDEs
 .vscode
 .history
 .idea
-yarn.lock
+.fallow
+
+# Miscellaneous
+.DS_Store
+*.pem
 .eslintcache
-tsconfig.tsbuildinfo

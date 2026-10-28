@@ -11,13 +11,13 @@ function tableWith({ id }: { id?: string } = {}) {
 }
 
 describe("players", () => {
-  it("asd", () => {
+  it("empty table has no players", () => {
     const table = tableWith();
 
     expect(table.players()).toEqual({});
   });
 
-  it("asd", () => {
+  it("buy in leaves the player owing that amount", () => {
     const table = tableWith();
 
     table.addPlayer("A", "A", 100);
@@ -25,26 +25,26 @@ describe("players", () => {
     expect(table.players()).toEqual({ A: -100 });
   });
 
-  it("asd", () => {
+  it("can't add a player with a negative amount", () => {
     const table = tableWith();
 
     expect(() => table.addPlayer("A", "A", -100)).toThrow(Table.amountMustBePositiveError);
   });
 
-  it("asd", () => {
+  it("can't add a player with zero amount", () => {
     const table = tableWith();
 
     expect(() => table.addPlayer("A", "A", 0)).toThrow(Table.amountMustBePositiveError);
   });
 
-  it("asd", () => {
+  it("can't add a player who is already in game", () => {
     const table = tableWith();
     table.addPlayer("A", "A", 100);
 
     expect(() => table.addPlayer("A", "A", 100)).toThrow(Table.playerAlreadyInGameError);
   });
 
-  it("asd", () => {
+  it("add several players", () => {
     const table = tableWith();
 
     table.addPlayer("A", "A", 100);
@@ -53,7 +53,7 @@ describe("players", () => {
     expect(table.players()).toEqual({ A: -100, B: -100 });
   });
 
-  it("asd", () => {
+  it("rebuy adds to what the player owes", () => {
     const table = tableWith();
     table.addPlayer("A", "A", 100);
 
@@ -62,19 +62,19 @@ describe("players", () => {
     expect(table.players()).toEqual({ A: -200 });
   });
 
-  it("asd", () => {
+  it("can't rebuy a player who isn't in the table", () => {
     const table = tableWith();
 
     expect(() => table.reBuy("A", 100)).toThrow(Table.playerNotFoundError);
   });
 
-  it("asd", () => {
+  it("can't rebuy a negative amount", () => {
     const table = tableWith();
 
     expect(() => table.reBuy("A", -100)).toThrow(Table.amountMustBePositiveError);
   });
 
-  it("asd", () => {
+  it("can't rebuy a player who already cashed out", () => {
     const table = tableWith();
     table.addPlayer("A", "A", 100);
     table.cashOut("A", 0);
@@ -82,19 +82,19 @@ describe("players", () => {
     expect(() => table.reBuy("A", 100)).toThrow(Table.playerNotFoundError);
   });
 
-  it("asd", () => {
+  it("can't cash out a player who isn't in the table", () => {
     const table = tableWith();
 
     expect(() => table.cashOut("A", 100)).toThrow(Table.playerNotFoundError);
   });
 
-  it("asd", () => {
+  it("can't cash out a negative amount", () => {
     const table = tableWith();
 
     expect(() => table.cashOut("A", -100)).toThrow(Table.amountMustBePositiveError);
   });
 
-  it("asd", () => {
+  it("cashing out the buy in leaves the player even", () => {
     const table = tableWith();
     table.addPlayer("A", "A", 100);
 
@@ -103,7 +103,7 @@ describe("players", () => {
     expect(table.players()).toEqual({ A: 0 });
   });
 
-  it("asd", () => {
+  it("cashing out nothing leaves the player owing the buy in", () => {
     const table = tableWith();
     table.addPlayer("A", "A", 100);
 
@@ -112,16 +112,40 @@ describe("players", () => {
     expect(table.players()).toEqual({ A: -100 });
   });
 
-  it("asd", () => {
+  // Allowed on purpose: numbers can be off while the game is being settled.
+  it("can cash out more than the pot", () => {
     const table = tableWith();
     table.addPlayer("A", "A", 100);
 
     table.cashOut("A", 200);
 
     expect(table.players()).toEqual({ A: 100 });
+    expect(table.totalBalance()).toBe(-100);
   });
 
-  it("asd", () => {
+  it("doesn't calculate transfers while the pot is over cashed out", () => {
+    const table = tableWith();
+    table.addPlayer("A", "A", 100);
+    table.addPlayer("B", "B", 100);
+    table.cashOut("A", 300);
+
+    expect(() => table.calculateTransfers()).toThrow(`${Table.balanceNotZeroError}100`);
+  });
+
+  it("calculates transfers once the over cashed out pot is fixed", () => {
+    const table = tableWith();
+    table.addPlayer("A", "A", 100);
+    table.addPlayer("B", "B", 100);
+    table.cashOut("A", 300);
+    table.cashOut("B", 0);
+
+    table.editMovement(2, 200);
+
+    expect(table.totalBalance()).toBe(0);
+    expect(table.calculateTransfers()).toEqual(["B le debe 100 a A (A)"]);
+  });
+
+  it("can't cash out a player twice", () => {
     const table = tableWith();
     table.addPlayer("A", "A", 100);
     table.cashOut("A", 0);
@@ -129,7 +153,7 @@ describe("players", () => {
     expect(() => table.cashOut("A", 100)).toThrow(Table.playerNotFoundError);
   });
 
-  it("asd", () => {
+  it("can't cash out a player twice after another player left", () => {
     const table = tableWith();
     table.addPlayer("B", "A", 100);
     table.cashOut("B", 0);
@@ -139,7 +163,7 @@ describe("players", () => {
     expect(() => table.cashOut("A", 100)).toThrow(Table.playerNotFoundError);
   });
 
-  it("asd", () => {
+  it("player can buy in again after cashing out", () => {
     const table = tableWith();
     table.addPlayer("A", "A", 100);
     table.cashOut("A", 0);
@@ -149,7 +173,7 @@ describe("players", () => {
     expect(table.players()).toEqual({ A: -200 });
   });
 
-  it("asd", () => {
+  it("can't buy in again while back in game", () => {
     const table = tableWith();
     table.addPlayer("A", "A", 100);
     table.cashOut("A", 0);
@@ -160,20 +184,20 @@ describe("players", () => {
 });
 
 describe("is in game", () => {
-  it("asd", () => {
+  it("unknown player isn't in game", () => {
     const table = tableWith();
 
     expect(table.isInGame("A")).toBe(false);
   });
 
-  it("asd", () => {
+  it("player is in game after buying in", () => {
     const table = tableWith();
     table.addPlayer("A", "A", 100);
 
     expect(table.isInGame("A")).toBe(true);
   });
 
-  it("asd", () => {
+  it("player isn't in game after cashing out", () => {
     const table = tableWith();
     table.addPlayer("A", "A", 100);
     table.cashOut("A", 0);
@@ -181,7 +205,7 @@ describe("is in game", () => {
     expect(table.isInGame("A")).toBe(false);
   });
 
-  it("asd", () => {
+  it("player is in game again after buying in again", () => {
     const table = tableWith();
     table.addPlayer("A", "A", 100);
     table.cashOut("A", 0);
@@ -198,13 +222,13 @@ const mov = (player: string, amount: number, description: string) => ({
 });
 
 describe("movements", () => {
-  it("asd", () => {
+  it("empty table has no movements", () => {
     const table = tableWith();
 
     expect(table.getMovements()).toEqual([]);
   });
 
-  it("asd", () => {
+  it("buy in is listed as a movement", () => {
     const table = tableWith();
 
     table.addPlayer("A", "A", 100);
@@ -212,7 +236,7 @@ describe("movements", () => {
     expect(table.getMovements()).toEqual([mov("A", 100, "A entró con 100")]);
   });
 
-  it("asd", () => {
+  it("each buy in is listed as a movement", () => {
     const table = tableWith();
 
     table.addPlayer("A", "A", 100);
@@ -224,7 +248,7 @@ describe("movements", () => {
     ]);
   });
 
-  it("asd", () => {
+  it("rebuy is listed as a movement", () => {
     const table = tableWith();
     table.addPlayer("A", "A", 100);
 
@@ -236,7 +260,7 @@ describe("movements", () => {
     ]);
   });
 
-  it("asd", () => {
+  it("cash out is listed as a movement", () => {
     const table = tableWith();
     table.addPlayer("A", "A", 100);
 
@@ -250,13 +274,13 @@ describe("movements", () => {
 });
 
 describe("balance", () => {
-  it("asd", () => {
+  it("empty table has nothing in the pot", () => {
     const table = tableWith();
 
     expect(table.totalBalance()).toBe(0);
   });
 
-  it("asd", () => {
+  it("buy in goes to the pot", () => {
     const table = tableWith();
 
     table.addPlayer("A", "A", 100);
@@ -264,7 +288,7 @@ describe("balance", () => {
     expect(table.totalBalance()).toBe(100);
   });
 
-  it("asd", () => {
+  it("rebuy goes to the pot", () => {
     const table = tableWith();
     table.addPlayer("A", "A", 100);
 
@@ -273,7 +297,7 @@ describe("balance", () => {
     expect(table.totalBalance()).toBe(150);
   });
 
-  it("asd", () => {
+  it("every buy in goes to the pot", () => {
     const table = tableWith();
 
     table.addPlayer("A", "A", 100);
@@ -282,7 +306,7 @@ describe("balance", () => {
     expect(table.totalBalance()).toBe(200);
   });
 
-  it("asd", () => {
+  it("cash out takes from the pot", () => {
     const table = tableWith();
     table.addPlayer("A", "A", 100);
     table.cashOut("A", 100);
@@ -292,7 +316,7 @@ describe("balance", () => {
 });
 
 describe("edit movements", () => {
-  it("cant edit movement does not exist", () => {
+  it("can't edit a movement that doesn't exist", () => {
     const table = tableWith();
 
     expect(() => table.editMovement(0, 100)).toThrow(Table.movementNotFoundError);
@@ -339,7 +363,7 @@ describe("edit movements", () => {
     expect(table.totalBalance()).toBe(50);
   });
 
-  it("edit movement of cashOut player", () => {
+  it("delete movement of cashOut player", () => {
     const table = tableWith();
     table.addPlayer("A", "A", 100);
     table.cashOut("A", 0);
@@ -353,7 +377,7 @@ describe("edit movements", () => {
 });
 
 describe("calculate transfers", () => {
-  it("asd", () => {
+  it("no transfers when the only player breaks even", () => {
     const table = tableWith();
     table.addPlayer("A", "A", 100);
     table.cashOut("A", 100);
@@ -361,7 +385,7 @@ describe("calculate transfers", () => {
     expect(table.calculateTransfers()).toEqual([]);
   });
 
-  it("asd", () => {
+  it("can't calculate transfers while the pot isn't empty", () => {
     const table = tableWith();
     table.addPlayer("A", "A", 100);
     table.addPlayer("B", "A", 50);
@@ -370,7 +394,7 @@ describe("calculate transfers", () => {
     expect(() => table.calculateTransfers()).toThrow(Table.balanceNotZeroError);
   });
 
-  it("asd", () => {
+  it("loser pays the winner", () => {
     const table = tableWith();
     table.addPlayer("A", "alias.A", 100);
     table.addPlayer("B", "alias.B", 50);
@@ -380,7 +404,7 @@ describe("calculate transfers", () => {
     expect(table.calculateTransfers()).toEqual(["A le debe 100 a B (alias.B)"]);
   });
 
-  it("asd", () => {
+  it("loser pays only what they lost", () => {
     const table = tableWith();
     table.addPlayer("A", "alias.A", 100);
     table.addPlayer("B", "alias.B", 100);
@@ -390,7 +414,7 @@ describe("calculate transfers", () => {
     expect(table.calculateTransfers()).toEqual(["A le debe 50 a B (alias.B)"]);
   });
 
-  it("asd", () => {
+  it("no transfers when everyone breaks even", () => {
     const table = tableWith();
     table.addPlayer("A", "alias.A", 100);
     table.addPlayer("B", "alias.B", 100);
@@ -400,7 +424,7 @@ describe("calculate transfers", () => {
     expect(table.calculateTransfers()).toEqual([]);
   });
 
-  it("uno le debe a varios", () => {
+  it("one loser pays several winners", () => {
     const table = tableWith();
     table.addPlayer("A", "alias.A", 100);
     table.addPlayer("B", "alias.B", 100);
@@ -415,7 +439,7 @@ describe("calculate transfers", () => {
     ]);
   });
 
-  it("varios le deben a uno", () => {
+  it("several losers pay one winner", () => {
     const table = tableWith();
     table.addPlayer("A", "alias.A", 100);
     table.addPlayer("B", "alias.B", 100);
@@ -430,7 +454,7 @@ describe("calculate transfers", () => {
     ]);
   });
 
-  it("asd", () => {
+  it("players who break even aren't part of the transfers", () => {
     const table = tableWith();
     table.addPlayer("A", "alias.A", 100);
     table.addPlayer("B", "alias.B", 100);
@@ -447,7 +471,7 @@ describe("calculate transfers", () => {
     ]);
   });
 
-  it("asd", () => {
+  it("each loser pays the biggest winner left", () => {
     const table = tableWith();
     table.addPlayer("A", "alias.A", 100);
     table.addPlayer("B", "alias.B", 100);
@@ -467,7 +491,7 @@ describe("calculate transfers", () => {
     ]);
   });
 
-  it("asd", () => {
+  it("biggest loser pays the biggest winner", () => {
     const table = tableWith();
     table.addPlayer("A", "alias.A", 100);
     table.addPlayer("B", "alias.B", 100);
@@ -486,7 +510,7 @@ describe("calculate transfers", () => {
     ]);
   });
 
-  it("asd", () => {
+  it("loser pays several winners when the amounts don't match", () => {
     const table = tableWith();
     table.addPlayer("A", "alias.A", 100);
     table.addPlayer("B", "alias.B", 100);

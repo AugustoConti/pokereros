@@ -1,9 +1,7 @@
 import type { PokerTable } from "@/models/table";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, UserPlus, Skull, Crown } from "lucide-react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -16,15 +14,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Form, FormError, InputField } from "@/components/ui/form";
+import { amountSchema, defaultFormOptions, useAppForm } from "@/components/ui/form";
 
 const addPlayerSchema = z.object({
-  name: z.string().min(1).max(200),
-  alias: z.string().min(1).max(200),
-  amount: z.coerce.number().positive(),
+  name: z.string().trim().min(1, "Ingresá un nombre").max(200, "El nombre es muy largo"),
+  alias: z.string().trim().min(1, "Ingresá un alias").max(200, "El alias es muy largo"),
+  amount: amountSchema.positive("El monto tiene que ser mayor a 0"),
 });
-
-type AddPlayerSchema = z.infer<typeof addPlayerSchema>;
 
 function AddPlayerForm({
   table,
@@ -36,29 +32,23 @@ function AddPlayerForm({
   balance?: number;
 }) {
   const [open, setOpen] = useState(false);
-  const methods = useForm<AddPlayerSchema>({
-    resolver: zodResolver(addPlayerSchema),
+  const form = useAppForm({
+    ...defaultFormOptions,
     defaultValues: { name: player ?? "", alias: player ?? "", amount: 0 },
-  });
-
-  const handleAddPlayer = async ({ name, alias, amount }: AddPlayerSchema) => {
-    try {
+    validators: { onDynamic: addPlayerSchema },
+    onSubmit: ({ value: { name, alias, amount } }) => {
       table.addPlayer(name, alias, amount);
       localStorage.setItem(name.toLowerCase(), alias);
       setOpen(false);
-    } catch (e) {
-      const message = e instanceof Error ? e.message : "Ocurrió un error inesperado.";
-
-      methods.setError("root", { type: "custom", message });
-    }
-  };
+    },
+  });
 
   return (
     <Dialog
       open={open}
       onOpenChange={(value) => {
         setOpen(value);
-        methods.reset();
+        form.reset();
       }}
     >
       <DialogTrigger asChild>
@@ -79,34 +69,38 @@ function AddPlayerForm({
           </DialogTitle>
           <DialogDescription>{player ? "Está seguro? 🤔" : "Quién se suma pa?"}</DialogDescription>
         </DialogHeader>
-        <Form className="space-y-4" methods={methods} onSubmit={handleAddPlayer}>
+        <form.AppForm className="space-y-4" form={form}>
           <div className="grid gap-2">
             {!player ? (
               <>
-                <InputField<AddPlayerSchema>
-                  label="Nombre"
-                  name="name"
-                  onChange={(e) => {
-                    const name = e.target.value;
-                    const alias = localStorage.getItem(name.toLowerCase());
+                <form.AppField
+                  children={(field) => (
+                    <field.Input
+                      label="Nombre"
+                      onChange={(e) => {
+                        const name = e.target.value;
+                        const alias = localStorage.getItem(name.toLowerCase());
 
-                    if (alias) {
-                      methods.setValue("alias", alias);
-                    }
-                  }}
+                        if (alias) {
+                          form.setFieldValue("alias", alias);
+                        }
+                      }}
+                    />
+                  )}
+                  name="name"
                 />
-                <InputField<AddPlayerSchema> label="Alias" name="alias" />
+                <form.AppField children={(field) => <field.Input label="Alias" />} name="alias" />
               </>
             ) : null}
-            <InputField<AddPlayerSchema> label="Monto" name="amount" type="number" />
+            <form.AppField children={(field) => <field.Number label="Monto" />} name="amount" />
           </div>
-          <FormError message={methods.formState.errors.root?.message} />
+          <form.FormError />
           <DialogFooter>
             <Button aria-label="submit" size="icon" type="submit">
               <Check className="h-4 w-4" />
             </Button>
           </DialogFooter>
-        </Form>
+        </form.AppForm>
       </DialogContent>
     </Dialog>
   );

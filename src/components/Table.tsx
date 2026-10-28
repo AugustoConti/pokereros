@@ -1,5 +1,4 @@
-"use client";
-
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
   Check,
   ChevronDown,
@@ -12,13 +11,16 @@ import {
   Link as LinkIcon,
   QrCode,
 } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { QRCodeSVG } from "qrcode.react";
 import { type ReactNode, useState } from "react";
 
-import DeleteMovementForm from "@/app/DeleteMovementForm";
-import EditMovementForm from "@/app/EditMovementForm";
-import ResetTableForm from "@/app/ResetTableForm";
+import AddPlayerForm from "./AddPlayerForm";
+import CashOutForm from "./CashOutForm";
+import ReBuyForm from "./ReBuyForm";
+
+import DeleteMovementForm from "@/components/DeleteMovementForm";
+import EditMovementForm from "@/components/EditMovementForm";
+import ResetTableForm from "@/components/ResetTableForm";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -28,11 +30,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { cn, formatMoney } from "@/lib/utils";
-import { Table, type PokerTable } from "@/models/table";
-
-import AddPlayerForm from "./AddPlayerForm";
-import CashOutForm from "./CashOutForm";
-import ReBuyForm from "./ReBuyForm";
+import { Table, type PokerTable, type TableData } from "@/models/table";
 
 function GitHub() {
   return (
@@ -48,9 +46,9 @@ function GitHub() {
 function TableBackground({ children }: { children: ReactNode }) {
   return (
     <div className="relative flex h-[calc(100vh-3rem)] items-center justify-center bg-gray-700 shadow-inner">
-      <div className="absolute h-[calc(100vh-3rem)] w-screen bg-[url('/poker_icons.png')] shadow-[inset_0_0_200px_70px_rgba(0,0,0,0.5)]" />
+      <div className="absolute inset-0 bg-[url('/suits-pattern.svg')] shadow-[inset_0_0_200px_70px_rgba(0,0,0,0.5)]" />
       <div className="relative h-3/4 w-3/4 rounded-full bg-gray-700 shadow-[inset_0_0_13px_13px_rgb(0,0,0)]">
-        <div className="absolute left-1/2 top-1/2 flex h-[calc(100%-5rem)] w-[calc(100%-5rem)] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-green-700 shadow-[0_0_13px_13px_rgb(0,0,0),_inset_0_0_13px_13px_rgba(0,0,0,0.3)]">
+        <div className="absolute top-1/2 left-1/2 flex h-[calc(100%-5rem)] w-[calc(100%-5rem)] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-green-700 shadow-[0_0_13px_13px_rgb(0,0,0),inset_0_0_13px_13px_rgba(0,0,0,0.3)]">
           <div className="h-[calc(100%-3rem)] w-[calc(100%-3rem)] rounded-full border-2 border-gray-300" />
         </div>
       </div>
@@ -98,11 +96,11 @@ function Seat({
 }) {
   return (
     <div
-      className={`absolute max-w-40 -translate-x-1/2 -translate-y-1/2 space-y-2 rounded-md bg-black/30 px-4 py-3 shadow backdrop-blur-lg`}
+      className={`absolute max-w-40 -translate-x-1/2 -translate-y-1/2 space-y-2 rounded-md bg-black/30 px-4 py-3 shadow-sm backdrop-blur-lg`}
       data-testid={`seat-${player}`}
       style={getSeatPosition(i, total)}
     >
-      <p className="break-words text-sm">{player}</p>
+      <p className="text-sm wrap-break-word">{player}</p>
       <PlayerBalance balance={balance} />
       {!readOnly ? (
         <div className="flex justify-center space-x-1">
@@ -140,8 +138,10 @@ function TableComponent({ table, resetTable }: { table: PokerTable; resetTable?:
   const readOnly = !resetTable;
   const tableUrl = () => `${window.location.origin}/${table.getId()}`;
 
-  const router = useRouter();
-  const pushToHome = () => router.push("/");
+  const navigate = useNavigate();
+  const pushToHome = () => {
+    void navigate({ to: "/" });
+  };
 
   const [showQRLink, setShowQRLink] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
@@ -164,7 +164,7 @@ function TableComponent({ table, resetTable }: { table: PokerTable; resetTable?:
   return (
     <main>
       <TableBackground>
-        <div className="min-w-40 space-y-2 rounded-md bg-black/30 px-4 py-3 shadow backdrop-blur-lg">
+        <div className="min-w-40 space-y-2 rounded-md bg-black/30 px-4 py-3 shadow-sm backdrop-blur-lg">
           <p className="text-2xl font-bold" data-testid="total-balance">
             {formatMoney(table.totalBalance())}
           </p>
@@ -200,10 +200,7 @@ function TableComponent({ table, resetTable }: { table: PokerTable; resetTable?:
                   <DialogTitle>🫂 Compartir mesa</DialogTitle>
                 </DialogHeader>
                 <div className="my-4 flex flex-col items-center">
-                  <img
-                    alt="QR"
-                    src={`https://api.qrserver.com/v1/create-qr-code/?data=${tableUrl()}`}
-                  />
+                  <QRCodeSVG marginSize={2} size={200} title="QR de la mesa" value={tableUrl()} />
                 </div>
               </DialogContent>
             </Dialog>
@@ -227,7 +224,7 @@ function TableComponent({ table, resetTable }: { table: PokerTable; resetTable?:
             </a>
             <Link
               className="flex items-center rounded border border-input px-1.5 hover:bg-gray-800"
-              href="./manos"
+              to="/manos"
             >
               <div>
                 <Heart className="size-3 text-red-500" fill="currentColor" />
@@ -240,7 +237,7 @@ function TableComponent({ table, resetTable }: { table: PokerTable; resetTable?:
             </Link>
             <Link
               className="flex items-center rounded border border-input px-1.5 hover:bg-gray-800"
-              href="./fichas"
+              to="/fichas"
             >
               <CircleDotDashed className="text-amber-500" />
             </Link>
@@ -319,7 +316,7 @@ function TableComponent({ table, resetTable }: { table: PokerTable; resetTable?:
   );
 }
 
-function TableFromObject({ tableData }: { tableData: Record<string, unknown> }) {
+function TableFromObject({ tableData }: { tableData: TableData }) {
   const table = Table.fromJSON(tableData, formatMoney);
 
   return <TableComponent table={table} />;

@@ -1,0 +1,7 @@
+src/routeTree.gen.ts
+pnpm-lock.yaml
+pnpm-workspace.yaml
+.output
+.tanstack
+.vercel
+coverage

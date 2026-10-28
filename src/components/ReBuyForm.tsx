@@ -1,9 +1,7 @@
 import type { PokerTable } from "@/models/table";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import { DollarSign, Check } from "lucide-react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -16,38 +14,30 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Form, FormError, InputField } from "@/components/ui/form";
+import { amountSchema, defaultFormOptions, useAppForm } from "@/components/ui/form";
 
 const reBuySchema = z.object({
-  amount: z.coerce.number().positive(),
+  amount: amountSchema.positive("El monto tiene que ser mayor a 0"),
 });
-
-type ReBuySchema = z.infer<typeof reBuySchema>;
 
 function ReBuyForm({ table, player }: { table: PokerTable; player: string }) {
   const [open, setOpen] = useState(false);
-  const methods = useForm<ReBuySchema>({
-    resolver: zodResolver(reBuySchema),
+  const form = useAppForm({
+    ...defaultFormOptions,
     defaultValues: { amount: 0 },
-  });
-
-  const handleReBuy = async ({ amount }: ReBuySchema) => {
-    try {
-      table.reBuy(player, amount);
+    validators: { onDynamic: reBuySchema },
+    onSubmit: ({ value }) => {
+      table.reBuy(player, value.amount);
       setOpen(false);
-    } catch (e) {
-      const message = e instanceof Error ? e.message : "Ocurrió un error inesperado.";
-
-      methods.setError("root", { type: "custom", message });
-    }
-  };
+    },
+  });
 
   return (
     <Dialog
       open={open}
       onOpenChange={(value) => {
         setOpen(value);
-        methods.reset();
+        form.reset();
       }}
     >
       <DialogTrigger asChild>
@@ -60,17 +50,17 @@ function ReBuyForm({ table, player }: { table: PokerTable; player: string }) {
           <DialogTitle>💰 {player} quiere agregar</DialogTitle>
           <DialogDescription>Cuanto más va a perder? 📉</DialogDescription>
         </DialogHeader>
-        <Form className="space-y-4" methods={methods} onSubmit={handleReBuy}>
+        <form.AppForm className="space-y-4" form={form}>
           <div className="grid gap-2">
-            <InputField<ReBuySchema> label="Monto" name="amount" type="number" />
+            <form.AppField children={(field) => <field.Number label="Monto" />} name="amount" />
           </div>
-          <FormError message={methods.formState.errors.root?.message} />
+          <form.FormError />
           <DialogFooter>
             <Button aria-label="submit" size="icon" type="submit">
               <Check className="h-4 w-4" />
             </Button>
           </DialogFooter>
-        </Form>
+        </form.AppForm>
       </DialogContent>
     </Dialog>
   );

@@ -1,20 +1,26 @@
-"use client";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Minus, Plus, RotateCcw, Paintbrush, X, PlusIcon } from "lucide-react";
-import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatMoney } from "@/lib/utils";
+
+export const Route = createFileRoute("/fichas")({
+  component: ChipsPage,
+});
 
 type Chip = {
   value: number;
   color: string;
 };
 
-type ChipCount = Chip & {
-  count?: number;
-};
+const chipsSchema = z.array(
+  z.object({ value: z.number(), color: z.string(), count: z.number().optional() }),
+);
+
+type ChipCount = z.infer<typeof chipsSchema>[number];
 
 const defaultChipConfigs = [
   { value: 300, color: "#ffffff" },
@@ -22,7 +28,7 @@ const defaultChipConfigs = [
   { value: 1500, color: "#FF4136" },
   { value: 3000, color: "#2ECC40" },
   { value: 7500, color: "#000000" },
-] satisfies Chip[];
+] satisfies Array<Chip>;
 
 function PokerChip({
   value,
@@ -51,11 +57,11 @@ function PokerChip({
           <X className="size-4" />
         </Button>
       </div>
-      <svg className="flex-shrink-0" height="120" viewBox="0 0 100 100" width="120">
+      <svg className="shrink-0" height="120" viewBox="0 0 100 100" width="120">
         <circle cx="50" cy="52" fill="rgba(0,0,0,0.2)" r="45" />
         <circle cx="50" cy="50" fill={color} r="45" />
         <circle cx="50" cy="50" fill="none" r="45" stroke="rgba(255,255,255,0.5)" strokeWidth="2" />
-        {[...Array(18)].map((_, i) => (
+        {Array.from({ length: 18 }, (_, i) => (
           <line
             key={i}
             stroke={border}
@@ -82,7 +88,7 @@ function PokerChip({
             }}
             type="number"
             value={value}
-            onChange={(e) => onValueChange(Math.max(0, parseInt(e.target.value) || 0))}
+            onChange={(e) => onValueChange(Math.max(0, parseInt(e.target.value, 10) || 0))}
           />
         </foreignObject>
         <foreignObject height="22" width="22" x="40" y="55">
@@ -120,7 +126,7 @@ function PokerChip({
         min="0"
         type="number"
         value={count || ""}
-        onChange={(e) => onCountChange(Math.max(0, parseInt(e.target.value) || 0))}
+        onChange={(e) => onCountChange(Math.max(0, parseInt(e.target.value, 10) || 0))}
       />
       <Button
         aria-label={`Increase ${value} chip count`}
@@ -135,12 +141,12 @@ function PokerChip({
   );
 }
 
-const getInitialChips = (): ChipCount[] => {
+const getInitialChips = (): Array<ChipCount> => {
   try {
-    const stored = JSON.parse(localStorage.getItem("chips") ?? "[]");
+    const stored = chipsSchema.safeParse(JSON.parse(localStorage.getItem("chips") ?? "[]"));
 
-    return Array.isArray(stored) && stored.length > 0
-      ? stored
+    return stored.success && stored.data.length > 0
+      ? stored.data
       : defaultChipConfigs.map((c) => ({ ...c, count: 0 }));
   } catch {
     return defaultChipConfigs.map((c) => ({ ...c, count: 0 }));
@@ -153,18 +159,11 @@ function ChipsPage() {
     try {
       const stored = localStorage.getItem("bbValue");
 
-      return stored ? parseInt(stored) : 600;
+      return stored ? parseInt(stored, 10) : 600;
     } catch {
       return 600;
     }
   });
-
-  useEffect(() => {
-    setChips(getInitialChips());
-    const storedBb = localStorage.getItem("bbValue");
-
-    if (storedBb) setBbValue(parseInt(storedBb));
-  }, []);
 
   const saveChips = (newChips: typeof chips) => {
     localStorage.setItem("chips", JSON.stringify(newChips));
@@ -184,10 +183,7 @@ function ChipsPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center bg-slate-800">
-      <Link
-        className="absolute right-0 float-end m-3 rounded-full border border-white p-1"
-        href="/"
-      >
+      <Link className="absolute right-0 float-end m-3 rounded-full border border-white p-1" to="/">
         <X className="size-5" />
       </Link>
       <div className="mt-10">
@@ -243,7 +239,7 @@ function ChipsPage() {
             className="text-md w-24 text-center"
             type="number"
             value={bbValue}
-            onChange={(e) => saveBbValue(Math.max(0, parseInt(e.target.value) || 600))}
+            onChange={(e) => saveBbValue(Math.max(0, parseInt(e.target.value, 10) || 600))}
           />
           <p className="text-lg font-bold">= {Math.round((total / bbValue) * 100) / 100} BB</p>
         </div>
@@ -251,6 +247,3 @@ function ChipsPage() {
     </div>
   );
 }
-
-// eslint-disable-next-line import/no-unused-modules
-export default ChipsPage;

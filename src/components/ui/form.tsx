@@ -1,240 +1,154 @@
-import type * as LabelPrimitive from "@radix-ui/react-label";
-
-import { Slot } from "@radix-ui/react-slot";
-import * as React from "react";
 import {
-  type BaseSyntheticEvent,
-  type ChangeEventHandler,
-  type ComponentPropsWithoutRef,
-  createContext,
-  type ElementRef,
-  forwardRef,
-  type HTMLAttributes,
-  type HTMLInputTypeAttribute,
-  type ReactNode,
-  useContext,
-  useId,
-} from "react";
-import {
-  Controller,
-  type ControllerProps,
-  type FieldPath,
-  type FieldValues,
-  FormProvider,
-  useFormContext,
-  type UseFormReturn,
-} from "react-hook-form";
+  type AnyFieldMeta,
+  type AnyFormApi,
+  createFormHook,
+  createFormHookContexts,
+  formOptions,
+  revalidateLogic,
+  useSelector,
+} from "@tanstack/react-form";
+import { type ChangeEventHandler, type ReactNode, useId } from "react";
+import { z } from "zod";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
 
-type FormProps<T extends FieldValues = FieldValues> = {
-  className?: string;
-  children: ReactNode;
-  methods: UseFormReturn<T>;
-  onSubmit: (data: T, event?: BaseSyntheticEvent) => Promise<void>;
-};
+const { fieldContext, useFieldContext, formContext, useFormContext } = createFormHookContexts();
 
-function Form<T extends FieldValues>({ className, children, methods, onSubmit }: FormProps<T>) {
-  const { handleSubmit } = methods;
+function FieldErrors({ id, meta }: { id: string; meta: AnyFieldMeta }) {
+  if (meta.isValid) return null;
+
+  const messages = meta.errors.flatMap((error: unknown) =>
+    typeof error === "string"
+      ? [error]
+      : typeof error === "object" && error !== null && "message" in error
+        ? [String(error.message)]
+        : [],
+  );
 
   return (
-    <FormProvider {...methods}>
-      <form
-        className={className}
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        onSubmit={handleSubmit(onSubmit)}
-      >
-        {children}
-      </form>
-    </FormProvider>
+    <p className="text-sm font-medium text-destructive" id={id}>
+      {messages.join(", ")}
+    </p>
   );
 }
 
-type FormFieldContextValue<
-  TFieldValues extends FieldValues = FieldValues,
-  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
-> = {
-  name: TName;
-};
-
-// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-const FormFieldContext = createContext<FormFieldContextValue>({} as FormFieldContextValue);
-
-const FormField = <
-  TFieldValues extends FieldValues = FieldValues,
-  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
->({
-  ...props
-}: ControllerProps<TFieldValues, TName>) => {
-  return (
-    <FormFieldContext.Provider value={{ name: props.name }}>
-      <Controller {...props} />
-    </FormFieldContext.Provider>
-  );
-};
-
-const useFormField = () => {
-  const fieldContext = useContext(FormFieldContext);
-  const itemContext = useContext(FormItemContext);
-  const { getFieldState, formState } = useFormContext();
-  const fieldState = getFieldState(fieldContext.name, formState);
-  const { id } = itemContext;
-
-  return {
-    id,
-    name: fieldContext.name,
-    formItemId: `${id}-form-item`,
-    formDescriptionId: `${id}-form-item-description`,
-    formMessageId: `${id}-form-item-message`,
-    ...fieldState,
-  };
-};
-
-type FormItemContextValue = {
-  id: string;
-};
-
-// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-const FormItemContext = createContext<FormItemContextValue>({} as FormItemContextValue);
-
-const FormItem = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => {
-    const id = useId();
-
-    return (
-      <FormItemContext.Provider value={{ id }}>
-        <div ref={ref} className={cn("space-y-1", className)} {...props} />
-      </FormItemContext.Provider>
-    );
-  },
-);
-
-FormItem.displayName = "FormItem";
-
-const FormLabel = forwardRef<
-  ElementRef<typeof LabelPrimitive.Root>,
-  ComponentPropsWithoutRef<typeof LabelPrimitive.Root>
->(({ className, ...props }, ref) => {
-  const { error, formItemId } = useFormField();
-
-  return (
-    <Label
-      ref={ref}
-      className={cn(error && "text-destructive", className)}
-      htmlFor={formItemId}
-      {...props}
-    />
-  );
-});
-
-FormLabel.displayName = "FormLabel";
-
-const FormControl = forwardRef<ElementRef<typeof Slot>, ComponentPropsWithoutRef<typeof Slot>>(
-  ({ ...props }, ref) => {
-    const { error, formItemId, formDescriptionId, formMessageId } = useFormField();
-
-    return (
-      <Slot
-        ref={ref}
-        aria-describedby={!error ? `${formDescriptionId}` : `${formDescriptionId} ${formMessageId}`}
-        aria-invalid={!!error}
-        id={formItemId}
-        {...props}
-      />
-    );
-  },
-);
-
-FormControl.displayName = "FormControl";
-
-const FormDescription = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLParagraphElement>>(
-  ({ className, ...props }, ref) => {
-    const { formDescriptionId } = useFormField();
-
-    return (
-      <p
-        ref={ref}
-        className={cn("text-sm text-muted-foreground", className)}
-        id={formDescriptionId}
-        {...props}
-      />
-    );
-  },
-);
-
-FormDescription.displayName = "FormDescription";
-
-const FormMessage = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLParagraphElement>>(
-  ({ className, children, ...props }, ref) => {
-    const { error, formMessageId } = useFormField();
-    const body = error ? String(error.message) : children;
-
-    if (!body) {
-      return null;
-    }
-
-    return (
-      <p
-        ref={ref}
-        className={cn("text-sm font-medium text-destructive", className)}
-        id={formMessageId}
-        {...props}
-      >
-        {body}
-      </p>
-    );
-  },
-);
-
-FormMessage.displayName = "FormMessage";
-
-function InputField<
-  TFieldValues extends FieldValues = FieldValues,
-  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
->({
+function Field({
   label,
-  name,
-  type,
+  children,
+}: {
+  label: string;
+  children: (props: {
+    id: string;
+    "aria-invalid": boolean;
+    "aria-describedby": string;
+  }) => ReactNode;
+}) {
+  const field = useFieldContext();
+  const id = useId();
+  const errorId = `${id}-error`;
+
+  return (
+    <div className="space-y-1">
+      <div className="grid grid-cols-4 items-center gap-4 space-y-1">
+        <Label className="justify-end" htmlFor={id}>
+          {label}
+        </Label>
+        {children({
+          id,
+          "aria-invalid": !field.state.meta.isValid,
+          "aria-describedby": errorId,
+        })}
+      </div>
+      <FieldErrors id={errorId} meta={field.state.meta} />
+    </div>
+  );
+}
+
+function InputField({
+  label,
   onChange,
 }: {
   label: string;
-  name: TName;
-  type?: HTMLInputTypeAttribute | undefined;
   onChange?: ChangeEventHandler<HTMLInputElement>;
 }) {
-  const methods = useFormContext<TFieldValues>();
+  const field = useFieldContext<string>();
 
   return (
-    <FormField
-      control={methods.control}
-      name={name}
-      render={({ field }) => (
-        <FormItem>
-          <div className="grid grid-cols-4 items-center gap-4 space-y-1">
-            <FormLabel className="text-right">{label}</FormLabel>
-            <FormControl>
-              <Input
-                className="col-span-3"
-                type={type}
-                {...field}
-                onChange={(e) => {
-                  onChange?.(e);
-                  field.onChange(e);
-                }}
-              />
-            </FormControl>
-          </div>
-          <FormMessage />
-        </FormItem>
+    <Field label={label}>
+      {(props) => (
+        <Input
+          {...props}
+          className="col-span-3"
+          name={field.name}
+          value={field.state.value}
+          onBlur={field.handleBlur}
+          onChange={(e) => {
+            onChange?.(e);
+            field.handleChange(e.target.value);
+          }}
+        />
       )}
-    />
+    </Field>
   );
 }
 
-function FormError({ message }: { message?: string }) {
-  if (!message) return null;
+function NumberField({ label }: { label: string }) {
+  const field = useFieldContext<number>();
+
+  return (
+    <Field label={label}>
+      {(props) => (
+        <Input
+          {...props}
+          className="col-span-3"
+          name={field.name}
+          type="number"
+          value={Number.isNaN(field.state.value) ? "" : field.state.value}
+          onBlur={field.handleBlur}
+          onChange={(e) => field.handleChange(e.target.value === "" ? NaN : e.target.valueAsNumber)}
+        />
+      )}
+    </Field>
+  );
+}
+
+function AppForm({
+  className,
+  children,
+  form,
+}: {
+  className?: string;
+  children: ReactNode;
+  form: AnyFormApi;
+}) {
+  return (
+    <formContext.Provider value={form}>
+      <form
+        noValidate
+        className={className}
+        id={form.formId}
+        onSubmit={(e) => {
+          e.preventDefault();
+          // TanStack Form rethrows whatever `onSubmit` throws without storing it. Keeping it as an
+          // `onServer` error shows it until the next change, blur or submit, which clear it.
+          form.handleSubmit().catch((error: unknown) => {
+            form.setErrorMap({ onServer: errorMessage(error) });
+          });
+        }}
+      >
+        {children}
+      </form>
+    </formContext.Provider>
+  );
+}
+
+/** Shows what the form's `onSubmit` threw. */
+function FormError() {
+  const form = useFormContext();
+  const message = useSelector(form.store, (state): unknown => state.errorMap.onServer);
+
+  if (typeof message !== "string") return null;
 
   return (
     <div aria-live="polite" className="text-sm text-rose-500">
@@ -243,15 +157,28 @@ function FormError({ message }: { message?: string }) {
   );
 }
 
-export {
-  Form,
-  // FormControl,
-  // FormDescription,
-  FormError,
-  // FormField,
-  // FormItem,
-  // FormLabel,
-  // FormMessage,
-  InputField,
-  // useFormField,
-};
+// Number inputs hold NaN while empty, which zod reports as a type error.
+const amountSchema = z.number({ error: "Ingresá un monto" });
+
+function errorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Ocurrió un error inesperado.";
+}
+
+const { useAppForm } = createFormHook({
+  fieldComponents: {
+    Input: InputField,
+    Number: NumberField,
+  },
+  formComponents: {
+    AppForm,
+    FormError,
+  },
+  fieldContext,
+  formContext,
+});
+
+const defaultFormOptions = formOptions({
+  validationLogic: revalidateLogic({ mode: "submit", modeAfterSubmission: "change" }),
+});
+
+export { amountSchema, defaultFormOptions, useAppForm };

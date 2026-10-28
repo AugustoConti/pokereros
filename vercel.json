@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "tanstack-start",
+  "rewrites": [
+    {
+      "source": "/_serverFn/:path*",
+      "destination": "/_serverFn/:path*"
+    },
+    {
+      "source": "/((?!assets/|_serverFn/).*)",
+      "destination": "/_shell.html"
+    }
+  ]
+}
