@@ -1,19 +1,12 @@
 import type { PokerTable } from "@/models/table";
 
-import { Check, UserPlus, Skull, Crown } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
 
+import { ActionSheet } from "@/components/ActionSheet";
+import { chipAmounts } from "@/components/quickAmounts";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { amountSchema, defaultFormOptions, useAppForm } from "@/components/ui/form";
 
 const addPlayerSchema = z.object({
@@ -22,19 +15,16 @@ const addPlayerSchema = z.object({
   amount: amountSchema.positive("El monto tiene que ser mayor a 0"),
 });
 
-function AddPlayerForm({
-  table,
-  player,
-  balance,
-}: {
-  table: PokerTable;
-  player?: string;
-  balance?: number;
-}) {
+/** Adds a new player, or lets one who already left buy in again when `player` is given. */
+function AddPlayerForm({ table, player }: { table: PokerTable; player?: string }) {
   const [open, setOpen] = useState(false);
   const form = useAppForm({
     ...defaultFormOptions,
-    defaultValues: { name: player ?? "", alias: player ?? "", amount: 0 },
+    defaultValues: {
+      name: player ?? "",
+      alias: player ?? "",
+      amount: NaN,
+    },
     validators: { onDynamic: addPlayerSchema },
     onSubmit: ({ value: { name, alias, amount } }) => {
       table.addPlayer(name, alias, amount);
@@ -44,65 +34,65 @@ function AddPlayerForm({
   });
 
   return (
-    <Dialog
+    <ActionSheet
       open={open}
+      title={player ? `${player} vuelve a entrar` : "Sumar jugador"}
+      trigger={
+        player ? (
+          <Button aria-label={`${player} vuelve a entrar`} variant="secondary">
+            Vuelve
+          </Button>
+        ) : (
+          <Button className="w-full" size="lg">
+            <UserPlus className="size-5" />
+            Sumar jugador
+          </Button>
+        )
+      }
       onOpenChange={(value) => {
         setOpen(value);
-        form.reset();
+        form.reset({
+          name: player ?? "",
+          alias: player ?? "",
+          amount: NaN,
+        });
       }}
     >
-      <DialogTrigger asChild>
-        <Button aria-label="add player" size="icon" variant="outline">
-          {!player ? (
-            <UserPlus className="h-4 w-4" />
-          ) : balance && balance >= 0 ? (
-            <Crown className="h-4 w-4 text-amber-500" />
-          ) : (
-            <Skull className="h-4 w-4 text-violet-500" />
-          )}
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>
-            {player ? `👋 ${player} vuelve a entrar` : "😎 Agregar jugador"}
-          </DialogTitle>
-          <DialogDescription>{player ? "Está seguro? 🤔" : "Quién se suma pa?"}</DialogDescription>
-        </DialogHeader>
-        <form.AppForm className="space-y-4" form={form}>
-          <div className="grid gap-2">
-            {!player ? (
-              <>
-                <form.AppField
-                  children={(field) => (
-                    <field.Input
-                      label="Nombre"
-                      onChange={(e) => {
-                        const name = e.target.value;
-                        const alias = localStorage.getItem(name.toLowerCase());
+      <form.AppForm className="flex flex-col gap-4" form={form}>
+        {!player ? (
+          <div className="grid grid-cols-2 gap-3">
+            <form.AppField
+              children={(field) => (
+                <field.Input
+                  label="Nombre"
+                  placeholder="Ej: Gabi"
+                  onChange={(e) => {
+                    const alias = localStorage.getItem(e.target.value.toLowerCase());
 
-                        if (alias) {
-                          form.setFieldValue("alias", alias);
-                        }
-                      }}
-                    />
-                  )}
-                  name="name"
+                    if (alias) {
+                      form.setFieldValue("alias", alias);
+                    }
+                  }}
                 />
-                <form.AppField children={(field) => <field.Input label="Alias" />} name="alias" />
-              </>
-            ) : null}
-            <form.AppField children={(field) => <field.Number label="Monto" />} name="amount" />
+              )}
+              name="name"
+            />
+            <form.AppField
+              children={(field) => (
+                <field.Input label="Alias para transferir" placeholder="Ej: gabi.mp" />
+              )}
+              name="alias"
+            />
           </div>
-          <form.FormError />
-          <DialogFooter>
-            <Button aria-label="submit" size="icon" type="submit">
-              <Check className="h-4 w-4" />
-            </Button>
-          </DialogFooter>
-        </form.AppForm>
-      </DialogContent>
-    </Dialog>
+        ) : null}
+        <form.AppField
+          children={(field) => <field.Amount addAmounts={chipAmounts} label="¿Con cuánto entra?" />}
+          name="amount"
+        />
+        <form.FormError />
+        <form.SubmitButton>{player ? "Confirmar entrada" : "Sumar a la mesa"}</form.SubmitButton>
+      </form.AppForm>
+    </ActionSheet>
   );
 }
 

@@ -1,19 +1,11 @@
 import type { PokerTable } from "@/models/table";
 
-import { DollarSign, Check } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
 
+import { ActionSheet } from "@/components/ActionSheet";
+import { chipAmounts } from "@/components/quickAmounts";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { amountSchema, defaultFormOptions, useAppForm } from "@/components/ui/form";
 
 const reBuySchema = z.object({
@@ -24,7 +16,7 @@ function ReBuyForm({ table, player }: { table: PokerTable; player: string }) {
   const [open, setOpen] = useState(false);
   const form = useAppForm({
     ...defaultFormOptions,
-    defaultValues: { amount: 0 },
+    defaultValues: { amount: NaN },
     validators: { onDynamic: reBuySchema },
     onSubmit: ({ value }) => {
       table.reBuy(player, value.amount);
@@ -33,36 +25,28 @@ function ReBuyForm({ table, player }: { table: PokerTable; player: string }) {
   });
 
   return (
-    <Dialog
+    <ActionSheet
       open={open}
+      title={`Recompra de ${player}`}
+      trigger={
+        <Button aria-label={`Recompra de ${player}`} variant="outline">
+          Recompra
+        </Button>
+      }
       onOpenChange={(value) => {
         setOpen(value);
         form.reset();
       }}
     >
-      <DialogTrigger asChild>
-        <Button aria-label="rebuy" className="text-green-600" size="icon" variant="outline">
-          <DollarSign className="h-4 w-4" />
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>💰 {player} quiere agregar</DialogTitle>
-          <DialogDescription>Cuanto más va a perder? 📉</DialogDescription>
-        </DialogHeader>
-        <form.AppForm className="space-y-4" form={form}>
-          <div className="grid gap-2">
-            <form.AppField children={(field) => <field.Number label="Monto" />} name="amount" />
-          </div>
-          <form.FormError />
-          <DialogFooter>
-            <Button aria-label="submit" size="icon" type="submit">
-              <Check className="h-4 w-4" />
-            </Button>
-          </DialogFooter>
-        </form.AppForm>
-      </DialogContent>
-    </Dialog>
+      <form.AppForm className="flex flex-col gap-4" form={form}>
+        <form.AppField
+          children={(field) => <field.Amount addAmounts={chipAmounts} label="¿Cuánto agrega?" />}
+          name="amount"
+        />
+        <form.FormError />
+        <form.SubmitButton>Confirmar recompra</form.SubmitButton>
+      </form.AppForm>
+    </ActionSheet>
   );
 }
 

@@ -92,5 +92,3 @@ Si encontrás una vulnerabilidad, por favor **no abras un issue público**: repo
 ## Licencia
 
 [MIT](LICENSE) © Augusto Conti.
-
-El patrón de palos del fondo usa íconos de [Lucide](https://lucide.dev) ([ISC](https://lucide.dev/license)).

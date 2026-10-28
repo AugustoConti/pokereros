@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { cn } from "cn";
 import { X } from "lucide-react";
 
-import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/manos")({
   component: Hands,
@@ -94,12 +95,14 @@ function Card({ card, kicker }: { card: string; kicker: boolean }) {
 
 function Hands() {
   return (
-    <main className="mx-auto max-w-3xl p-4">
-      <header className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Ranking de manos</h1>
-        <Link aria-label="Volver a la mesa" className="rounded-full border border-white p-1" to="/">
-          <X className="size-5" />
-        </Link>
+    <main className="mx-auto max-w-3xl px-5 pt-3 pb-8">
+      <header className="mb-4 flex items-center justify-between">
+        <h1 className="font-display text-2xl font-extrabold text-brass-light">Ranking de manos</h1>
+        <Button asChild size="icon" variant="ghost">
+          <Link aria-label="Volver a la mesa" title="Volver a la mesa" to="/">
+            <X className="size-5" />
+          </Link>
+        </Button>
       </header>
       <ol className="grid gap-x-8 gap-y-6 sm:grid-cols-2">
         {hands.map(({ name, description, cards, kickers = 0 }, index) => (

@@ -129,7 +129,7 @@ describe("players", () => {
     table.addPlayer("B", "B", 100);
     table.cashOut("A", 300);
 
-    expect(() => table.calculateTransfers()).toThrow(`${Table.balanceNotZeroError}100`);
+    expect(() => table.settlements()).toThrow(`${Table.balanceNotZeroError}100`);
   });
 
   it("calculates transfers once the over cashed out pot is fixed", () => {
@@ -142,7 +142,7 @@ describe("players", () => {
     table.editMovement(2, 200);
 
     expect(table.totalBalance()).toBe(0);
-    expect(table.calculateTransfers()).toEqual(["B le debe 100 a A (A)"]);
+    expect(table.settlements()).toEqual([{ from: "B", to: "A", alias: "A", amount: 100 }]);
   });
 
   it("can't cash out a player twice", () => {
@@ -382,7 +382,7 @@ describe("calculate transfers", () => {
     table.addPlayer("A", "A", 100);
     table.cashOut("A", 100);
 
-    expect(table.calculateTransfers()).toEqual([]);
+    expect(table.settlements()).toEqual([]);
   });
 
   it("can't calculate transfers while the pot isn't empty", () => {
@@ -391,7 +391,7 @@ describe("calculate transfers", () => {
     table.addPlayer("B", "A", 50);
     table.cashOut("A", 100);
 
-    expect(() => table.calculateTransfers()).toThrow(Table.balanceNotZeroError);
+    expect(() => table.settlements()).toThrow(Table.balanceNotZeroError);
   });
 
   it("loser pays the winner", () => {
@@ -401,7 +401,7 @@ describe("calculate transfers", () => {
     table.cashOut("A", 0);
     table.cashOut("B", 150);
 
-    expect(table.calculateTransfers()).toEqual(["A le debe 100 a B (alias.B)"]);
+    expect(table.settlements()).toEqual([{ from: "A", to: "B", alias: "alias.B", amount: 100 }]);
   });
 
   it("loser pays only what they lost", () => {
@@ -411,7 +411,7 @@ describe("calculate transfers", () => {
     table.cashOut("A", 50);
     table.cashOut("B", 150);
 
-    expect(table.calculateTransfers()).toEqual(["A le debe 50 a B (alias.B)"]);
+    expect(table.settlements()).toEqual([{ from: "A", to: "B", alias: "alias.B", amount: 50 }]);
   });
 
   it("no transfers when everyone breaks even", () => {
@@ -421,7 +421,7 @@ describe("calculate transfers", () => {
     table.cashOut("A", 100);
     table.cashOut("B", 100);
 
-    expect(table.calculateTransfers()).toEqual([]);
+    expect(table.settlements()).toEqual([]);
   });
 
   it("one loser pays several winners", () => {
@@ -433,9 +433,9 @@ describe("calculate transfers", () => {
     table.cashOut("B", 150);
     table.cashOut("C", 150);
 
-    expect(table.calculateTransfers()).toEqual([
-      "A le debe 50 a B (alias.B)",
-      "A le debe 50 a C (alias.C)",
+    expect(table.settlements()).toEqual([
+      { from: "A", to: "B", alias: "alias.B", amount: 50 },
+      { from: "A", to: "C", alias: "alias.C", amount: 50 },
     ]);
   });
 
@@ -448,9 +448,9 @@ describe("calculate transfers", () => {
     table.cashOut("B", 0);
     table.cashOut("C", 300);
 
-    expect(table.calculateTransfers()).toEqual([
-      "A le debe 100 a C (alias.C)",
-      "B le debe 100 a C (alias.C)",
+    expect(table.settlements()).toEqual([
+      { from: "A", to: "C", alias: "alias.C", amount: 100 },
+      { from: "B", to: "C", alias: "alias.C", amount: 100 },
     ]);
   });
 
@@ -465,9 +465,9 @@ describe("calculate transfers", () => {
     table.cashOut("C", 100);
     table.cashOut("D", 250);
 
-    expect(table.calculateTransfers()).toEqual([
-      "A le debe 100 a D (alias.D)",
-      "B le debe 50 a D (alias.D)",
+    expect(table.settlements()).toEqual([
+      { from: "A", to: "D", alias: "alias.D", amount: 100 },
+      { from: "B", to: "D", alias: "alias.D", amount: 50 },
     ]);
   });
 
@@ -484,10 +484,10 @@ describe("calculate transfers", () => {
     table.cashOut("D", 250);
     table.cashOut("E", 150);
 
-    expect(table.calculateTransfers()).toEqual([
-      "A le debe 100 a D (alias.D)",
-      "B le debe 50 a D (alias.D)",
-      "C le debe 50 a E (alias.E)",
+    expect(table.settlements()).toEqual([
+      { from: "A", to: "D", alias: "alias.D", amount: 100 },
+      { from: "B", to: "D", alias: "alias.D", amount: 50 },
+      { from: "C", to: "E", alias: "alias.E", amount: 50 },
     ]);
   });
 
@@ -504,9 +504,9 @@ describe("calculate transfers", () => {
     table.cashOut("D", 150);
     table.cashOut("E", 200);
 
-    expect(table.calculateTransfers()).toEqual([
-      "A le debe 100 a E (alias.E)",
-      "B le debe 50 a D (alias.D)",
+    expect(table.settlements()).toEqual([
+      { from: "A", to: "E", alias: "alias.E", amount: 100 },
+      { from: "B", to: "D", alias: "alias.D", amount: 50 },
     ]);
   });
 
@@ -523,10 +523,10 @@ describe("calculate transfers", () => {
     table.cashOut("D", 150);
     table.cashOut("E", 190);
 
-    expect(table.calculateTransfers()).toEqual([
-      "A le debe 90 a E (alias.E)",
-      "B le debe 50 a D (alias.D)",
-      "A le debe 10 a C (alias.C)",
+    expect(table.settlements()).toEqual([
+      { from: "A", to: "E", alias: "alias.E", amount: 90 },
+      { from: "B", to: "D", alias: "alias.D", amount: 50 },
+      { from: "A", to: "C", alias: "alias.C", amount: 10 },
     ]);
   });
 });

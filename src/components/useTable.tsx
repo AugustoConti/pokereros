@@ -87,8 +87,8 @@ function useTable(onSave: OnSave) {
         getMovements() {
           return table.getMovements();
         },
-        calculateTransfers() {
-          return table.calculateTransfers();
+        settlements() {
+          return table.settlements();
         },
         toJSON() {
           return table.toJSON();

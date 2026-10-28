@@ -21,6 +21,8 @@ type FunctionPropertyNames<T> = {
 
 type PokerTable = Pick<Table, FunctionPropertyNames<Table>>;
 
+type Settlement = { from: Player; to: Player; alias: string; amount: number };
+
 // Limits are far above any real game; they keep a single table from flooding the database.
 const MAX_NAME_LENGTH = 200;
 const MAX_MOVEMENTS = 2000;
@@ -179,7 +181,8 @@ class Table {
     }));
   }
 
-  calculateTransfers() {
+  /** Who pays whom to settle the table, biggest loser to biggest winner first. */
+  settlements(): Array<Settlement> {
     const players = this.players();
     const totalBalance = Object.values(players).reduce((acc, val) => acc + val, 0);
 
@@ -199,7 +202,7 @@ class Table {
     creditors.sort(byAmount);
     debtors.sort(byAmount);
 
-    const result = [];
+    const result: Array<Settlement> = [];
 
     while (creditors.length > 0 && debtors.length > 0 && creditors[0] && debtors[0]) {
       const [creditor, debtor] = [creditors[0], debtors[0]];
@@ -210,14 +213,17 @@ class Table {
       creditor.amount === 0 ? creditors.shift() : creditors.sort(byAmount);
       debtor.amount === 0 ? debtors.shift() : debtors.sort(byAmount);
 
-      result.push(
-        `${debtor.name} le debe ${this.formatMoney(settledAmount)} a ${creditor.name} (${this.aliases[creditor.name]})`,
-      );
+      result.push({
+        from: debtor.name,
+        to: creditor.name,
+        alias: this.aliases[creditor.name] ?? "",
+        amount: settledAmount,
+      });
     }
 
     return result;
   }
 }
 
-export type { PokerTable, TableData };
+export type { PokerTable, Settlement, TableData };
 export { Table, tableSchema };
